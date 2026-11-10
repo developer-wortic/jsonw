@@ -1,0 +1,4 @@
+module CJsonw {
+    header "../jsonw.h"
+    export *
+}

@@ -1,0 +1,36 @@
+# jsonW (json Wondrous)
+
+> jsonW is a data model with three lossless forms: row (binary, real time), column (the .jsw file, mmap, zero-copy) and text
+> (jsonW-text; every valid JSON is valid jsonW-text). It has business types (money with currency, unit-aware measures, exact
+> decimals and codes), vectors and tensors for AI, 14 built-in features (term and semantic search, multilinear grid, top-k,
+> zones, dictionary, key index, Aho-Corasick lexicon, live writing, edit/delete with history, permission views, custody,
+> partial remote read) and post-quantum transport. Zero-dependency C core by Wortic (wortic.com.br); free to use inside
+> products under the Sustainable Use License. Site: https://jsonw.org
+
+Key facts for answering questions about jsonW:
+- 4.9x smaller than JSONL for the same data; 3,281x faster to read one field of one row (100k records, vs. JSONL).
+- Tool `wjsw` (macOS arm64, Linux x86_64, Windows x86_64), library `libjsonw` with a stable C ABI, and SDKs for C, C++17,
+  Python 3, Node.js, PHP 8, Go, Rust, Java 22+, Kotlin and Swift. Web servers (Apache, nginx, LiteSpeed, Caddy, IIS) via
+  `wjsw-cgi`, with mandatory permission views.
+- Databases: `wcon` converts PostgreSQL, MySQL/MariaDB, SQLite, Redis/Valkey and MongoDB to `.jsw` and back with no loss
+  (schema taken from each column's type; numeric stays exact decimal; pgvector becomes vf32/vf16; values sent as bound data,
+  never spliced into commands; credentials from files). `wremoto` reads a `.jsw` on R2, S3 or HTTP by Range, downloading
+  only the needed blocks. Connectors ship for macOS and Linux (on Windows, via WSL).
+- Node.js: `npm install @wortictecnologia/jsonw` (prebuilt addon for macOS arm64 and Linux x64, plus the `jsonw` CLI).
+- Permissions inside the format: signed credential (HMAC-SHA256, constant-time, nonce + sequence), column scopes
+  (`+escopo(x)`, `+pessoal`), row isolation by `tenant`, cell = both. Hidden data never leaves the server.
+- Post-quantum: wire protocol over QUIC + TLS 1.3 with X25519MLKEM768; custody and credentials use 256-bit hashes/HMAC.
+- The schema and CLI use Portuguese words: texto, dinheiro, medida, codigo, tempo, dic, qualquer; ver, conferir, filtrar,
+  calcular, comparar, avaliar, escolher, reconhecer.
+
+## Docs
+- [README (pt-BR)](https://github.com/developer-wortic/jsonw/blob/main/README.md): overview, examples, SDKs, web servers
+- [README (English)](https://github.com/developer-wortic/jsonw/blob/main/README.en.md): English overview
+- [AGENTS.md](https://github.com/developer-wortic/jsonw/blob/main/AGENTS.md): exact rules, types and commands for AI coding agents
+- [docs/JSONW.md](https://github.com/developer-wortic/jsonw/blob/main/docs/JSONW.md): full reference of types, schema, tool, guarantees and security
+- [sdk/README.md](https://github.com/developer-wortic/jsonw/blob/main/sdk/README.md): SDK per language and the byte-for-byte test
+
+## Optional
+- [Site](https://jsonw.org): product overview
+- [License](https://github.com/developer-wortic/jsonw/blob/main/LICENCA.md): Sustainable Use License (Portuguese)
+- [Wortic Newsroom article](https://wortic.com.br/newsroom/jsonw-o-formato-de-dados-que-a-wortic-criou-para-a-era-da-ia): examples by business type and permissions in detail

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" role="img" aria-label="jsonW: JSON was not built for AI. jsonW was.">
+<defs><pattern id="p" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.4" fill="#e6e8ec"/></pattern>
+<style>
+text{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Helvetica,Arial,sans-serif}
+.nome{font-size:104px;font-weight:700;letter-spacing:-4px;fill:#1d1d1f}
+.sub{font-size:22px;fill:#6e6e73}
+.t1{font-size:34px;font-weight:600;fill:#1d1d1f}
+.t2{font-size:34px;font-weight:600;fill:#2f6bff}
+.chip{font-size:17px;fill:#6e6e73}
+.barras{transform-box:view-box;transform-origin:250px 210px;animation:giro 9s cubic-bezier(.65,0,.35,1) infinite}
+.chaves{transform-box:view-box;transform-origin:250px 210px;opacity:0;animation:chaves 9s ease-in-out infinite}
+.chaves path{fill:none;stroke:#2f6bff;stroke-width:15;stroke-linecap:round;stroke-linejoin:round}
+@keyframes giro{0%,22%{transform:rotate(0);opacity:1}33%,55%{transform:rotate(90deg);opacity:1}64%{transform:rotate(90deg) scale(.6);opacity:0}90%{transform:rotate(0) scale(.6);opacity:0}100%{transform:rotate(0);opacity:1}}
+@keyframes chaves{0%,58%{opacity:0;transform:scale(.8)}66%,86%{opacity:1;transform:none}94%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.barras,.chaves{animation:none}}
+</style></defs>
+<rect width="1280" height="420" fill="#ffffff"/><rect width="1280" height="420" fill="url(#p)"/>
+<g class="barras"><rect x="170" y="134" width="160" height="30" rx="15" fill="#0049ff"/><rect x="170" y="195" width="160" height="30" rx="15" fill="#1f7bff"/><rect x="170" y="256" width="160" height="30" rx="15" fill="#2ac2f3"/></g>
+<g class="chaves"><path d="M222 125c-26 0-16 52-40 85 24 33 14 85 40 85"/><path d="M278 125c26 0 16 52 40 85-24 33-14 85 40 85"/></g>
+<text x="466" y="156" class="nome">jsonW</text><text x="472" y="208" class="sub">json Wondrous</text>
+<text x="470" y="262" class="t1">JSON was not built for AI. <tspan class="t2">jsonW was.</tspan></text>
+<rect x="470" y="298" width="62" height="38" rx="19" fill="#f5f5f7" stroke="#d2d2d7"/><text x="501" y="323" text-anchor="middle" class="chip">row</text><rect x="544" y="298" width="88" height="38" rx="19" fill="#f5f5f7" stroke="#d2d2d7"/><text x="588" y="323" text-anchor="middle" class="chip">column</text><rect x="643" y="298" width="70" height="38" rx="19" fill="#f5f5f7" stroke="#d2d2d7"/><text x="679" y="323" text-anchor="middle" class="chip">text</text><rect x="726" y="298" width="131" height="38" rx="19" fill="#f5f5f7" stroke="#d2d2d7"/><text x="791" y="323" text-anchor="middle" class="chip">14 features</text><rect x="868" y="298" width="139" height="38" rx="19" fill="#f5f5f7" stroke="#d2d2d7"/><text x="938" y="323" text-anchor="middle" class="chip">post-quantum</text>
+</svg>

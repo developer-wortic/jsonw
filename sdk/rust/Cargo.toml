@@ -1,0 +1,16 @@
+[package]
+name = "jsonw"
+version = "1.2.1"
+edition = "2021"
+description = "jsonW (json Wondrous) para Rust, por cima da ABI C (libjsonw)"
+license-file = "../../LICENCA.md"   # Licenca de Uso Sustentavel do jsonW (nao e Apache: o campo anterior estava errado)
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+
+[[example]]
+name = "ler"
+path = "examples/ler.rs"
