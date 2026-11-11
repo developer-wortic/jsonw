@@ -314,6 +314,10 @@ $r = new JsonW\Leitor('vendas.jsw');
 echo $r->campo(0, 'preco');
 $r->conferir();
 ```
+
+O PHP precisa da extensão FFI ligada. Se a biblioteca não carregar, a exceção diz o caminho tentado e o erro do FFI.
+No LiteSpeed com várias versões do lsphp, o `ffi.so` vai para o `extension_dir` do lsphp que o site usa, e os
+processos só renovam com `touch /usr/local/lsws/admin/tmp/.lsphp_restart.txt`.
 </details>
 
 <details>

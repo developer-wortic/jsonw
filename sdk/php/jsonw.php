@@ -25,11 +25,12 @@ final class Lib {
         if (getenv("JSONW_LIB")) $cams[] = getenv("JSONW_LIB");
         foreach ([__DIR__, __DIR__ . "/..", __DIR__ . "/../..", __DIR__ . "/../../bin/" . $plat] as $pasta) foreach ($nomes as $n) $cams[] = $pasta . "/" . $n;
         foreach ($nomes as $n) $cams[] = $n;
+        $motivo = "";
         foreach ($cams as $cam) {
             if (str_contains($cam, "/") && !file_exists($cam)) continue;
-            try { self::$ffi = \FFI::cdef($cdef, $cam); return self::$ffi; } catch (\Throwable $e) {}
+            try { self::$ffi = \FFI::cdef($cdef, $cam); return self::$ffi; } catch (\Throwable $e) { if ($motivo === "") $motivo = " (" . $cam . ": " . $e->getMessage() . ")"; }
         }
-        throw new \RuntimeException("libjsonw nao encontrada para $plat: aponte JSONW_LIB para a biblioteca (bin/<plataforma>/ do pacote) ou copie-a para a pasta sdk");
+        throw new \RuntimeException("libjsonw nao encontrada para $plat$motivo: aponte JSONW_LIB para a biblioteca (bin/<plataforma>/ do pacote) ou copie-a para a pasta sdk");
     }
     public static function texto(callable $fn): string {   /* chama fn(saida, cap) ate caber */
         $cap = 1 << 16;
