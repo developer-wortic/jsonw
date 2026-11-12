@@ -9,11 +9,11 @@ core by [Wortic](https://wortic.com.br).
 
 ```text
 6.6×     smaller than uncompressed JSONL
-2,703×   faster to read a whole column
+2,508×   faster to read a whole column
 0        dependencies
 ```
 
-Measured 2026-11-12 with 1.2.1 (100k synthetic records, median of 5 runs, vs. JSONL read by our own JSON reader); methodology
+Measured 2026-11-12 with 1.2.1 (100k synthetic records, median of 10 runs, vs. JSONL read by our own JSON reader); methodology
 and limitations, including where jsonW loses, in the [paper](https://jsonw.org/paper/en).
 
 ## Install

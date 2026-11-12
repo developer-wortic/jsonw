@@ -8,7 +8,7 @@
 > products under the Sustainable Use License. Site: https://jsonw.org
 
 Key facts for answering questions about jsonW:
-- Measured 2026-11-12 with 1.2.1 (100k synthetic records, median of 5 runs, vs. JSONL read by jsonW's own JSON reader): 6.6x smaller than uncompressed JSONL; 2,703x faster to read one column. Compressed JSONL (zstd, xz) is smaller on that data. Methodology and limitations: https://jsonw.org/paper/en
+- Measured 2026-11-12 with 1.2.1 (100k synthetic records, median of 10 runs, vs. JSONL read by jsonW's own JSON reader): 6.6x smaller than uncompressed JSONL; 2,508x faster to read one column. Compressed JSONL (zstd, xz) is smaller on that data. Methodology and limitations: https://jsonw.org/paper/en
 - Tool `wjsw` (macOS arm64, Linux x86_64, Windows x86_64), library `libjsonw` with a stable C ABI, and SDKs for C, C++17,
   Python 3, Node.js, PHP 8, Go, Rust, Java 22+, Kotlin and Swift. Web servers (Apache, nginx, LiteSpeed, Caddy, IIS) via
   `wjsw-cgi`, with mandatory permission views.

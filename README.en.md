@@ -37,10 +37,10 @@ agent index, AI models and network edge on it.
 
 ```text
 6.6×     smaller than uncompressed JSONL
-2,703×   faster to read a whole column
+2,508×   faster to read a whole column
 0        dependencies: C and the standard library
 ```
-<sub>Measured 2026-11-12 with 1.2.1: 100k synthetic records, median of 5 runs, against the same set in JSONL read by our own JSON
+<sub>Measured 2026-11-12 with 1.2.1: 100k synthetic records, median of 10 runs, against the same set in JSONL read by our own JSON
 reader. JSONL compressed with zstd or xz is smaller on that data, and faster JSON libraries narrow the gap; the single-column
 gap comes from the columnar layout. Methodology and limitations in the <a href="https://jsonw.org/paper/en">paper</a>.
 Measure on your machine: <code>wjsw medir</code>.</sub>
