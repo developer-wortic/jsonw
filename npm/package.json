@@ -1,0 +1,52 @@
+{
+  "name": "@wortictecnologia/jsonw",
+  "version": "1.2.1",
+  "description": "jsonW (json Wondrous): the data format built for the AI era. One model, three lossless forms (row, column, text), with money, measures, vectors, search, permissions and custody inside the file. Zero-dependency C core.",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "bin": {
+    "jsonw": "bin/jsonw.js",
+    "wjsw": "bin/jsonw.js"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "bin/",
+    "prebuilt/",
+    "LICENCA.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "jsonw",
+    "json",
+    "jsonl",
+    "data-format",
+    "columnar",
+    "serialization",
+    "ai",
+    "llm",
+    "vector-search",
+    "embeddings",
+    "semantic-search",
+    "money",
+    "decimal",
+    "units",
+    "permissions",
+    "data-privacy",
+    "post-quantum",
+    "n-api"
+  ],
+  "homepage": "https://jsonw.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/developer-wortic/jsonw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/developer-wortic/jsonw/issues"
+  },
+  "author": "Wortic <dev@wortic.com.br> (https://wortic.com.br)",
+  "license": "SEE LICENSE IN LICENCA.md"
+}
