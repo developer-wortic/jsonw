@@ -37,10 +37,10 @@ ranking, permissão e custódia **dentro do próprio formato**. Núcleo em C, se
 
 ```text
 6,6×     menor que o JSONL sem compressão
-2.703×   mais rápido para ler uma coluna inteira
+2.508×   mais rápido para ler uma coluna inteira
 0        dependências: C e a biblioteca padrão
 ```
-<sub>Medido em 12/11/2026 com o 1.2.1: 100 mil registros sintéticos, mediana de 5 execuções, contra o mesmo conjunto em JSONL lido
+<sub>Medido em 12/11/2026 com o 1.2.1: 100 mil registros sintéticos, mediana de 10 execuções, contra o mesmo conjunto em JSONL lido
 pelo nosso próprio leitor de JSON. O JSONL comprimido com zstd ou xz fica menor nesses dados, e leitores de JSON mais rápidos
 encurtam a diferença; a de ler só uma coluna vem do formato em colunas. Metodologia e limitações no
 <a href="https://jsonw.org/paper">paper</a>. Meça na sua máquina com <code>wjsw medir</code>.</sub>
