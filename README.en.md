@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://jsonw.org"><b>Site</b></a> ·
+  <a href="https://jsonw.org/paper/en"><b>Paper</b></a> ·
   <a href="docs/JSONW.md"><b>Docs (pt-BR)</b></a> ·
   <a href="#30-second-start"><b>Start</b></a> ·
   <a href="AGENTS.md"><b>For AI agents</b></a> ·
@@ -35,12 +36,14 @@ and custody **inside the format**. Zero-dependency C core, maintained by [Wortic
 agent index, AI models and network edge on it.
 
 ```text
-4.9×     smaller than JSONL for the same data
-3,281×   faster to read one field of one row
+6.6×     smaller than uncompressed JSONL
+2,703×   faster to read a whole column
 0        dependencies: C and the standard library
 ```
-<sub>Measured on 100k records against the same set in JSONL read by our own JSON reader. Faster JSON libraries narrow the
-gap for full writes and reads; the single-field gap comes from the columnar layout. Measure on your machine: <code>wjsw medir</code>.</sub>
+<sub>Measured 2026-11-12 with 1.2.1: 100k synthetic records, median of 5 runs, against the same set in JSONL read by our own JSON
+reader. JSONL compressed with zstd or xz is smaller on that data, and faster JSON libraries narrow the gap; the single-column
+gap comes from the columnar layout. Methodology and limitations in the <a href="https://jsonw.org/paper/en">paper</a>.
+Measure on your machine: <code>wjsw medir</code>.</sub>
 
 ## 30-second start
 

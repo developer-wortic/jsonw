@@ -17,6 +17,7 @@
 
 <p align="center">
   <a href="https://jsonw.org"><b>Site</b></a> ·
+  <a href="https://jsonw.org/paper"><b>Paper</b></a> ·
   <a href="docs/JSONW.md"><b>Documentação</b></a> ·
   <a href="#em-30-segundos"><b>Começar</b></a> ·
   <a href="AGENTS.md"><b>Para IAs (AGENTS.md)</b></a> ·
@@ -35,13 +36,14 @@ ranking, permissão e custódia **dentro do próprio formato**. Núcleo em C, se
 [Wortic](https://wortic.com.br), que já roda nele o índice dos seus agentes, os seus modelos de IA e a borda da sua infraestrutura.
 
 ```text
-4,9×     menor que o JSONL dos mesmos dados
-3.281×   mais rápido para ler um campo de uma linha
+6,6×     menor que o JSONL sem compressão
+2.703×   mais rápido para ler uma coluna inteira
 0        dependências: C e a biblioteca padrão
 ```
-<sub>Medido com 100 mil registros contra o mesmo conjunto em JSONL lido pelo nosso próprio leitor de JSON. Bibliotecas de JSON
-mais otimizadas diminuem a diferença de gravar e ler tudo; a do acesso direto vem do formato em colunas. Meça na sua máquina
-com <code>wjsw medir</code>.</sub>
+<sub>Medido em 12/11/2026 com o 1.2.1: 100 mil registros sintéticos, mediana de 5 execuções, contra o mesmo conjunto em JSONL lido
+pelo nosso próprio leitor de JSON. O JSONL comprimido com zstd ou xz fica menor nesses dados, e leitores de JSON mais rápidos
+encurtam a diferença; a de ler só uma coluna vem do formato em colunas. Metodologia e limitações no
+<a href="https://jsonw.org/paper">paper</a>. Meça na sua máquina com <code>wjsw medir</code>.</sub>
 
 ## Sumário
 
