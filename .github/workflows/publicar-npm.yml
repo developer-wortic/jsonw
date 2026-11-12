@@ -1,0 +1,58 @@
+# Publica @wortictecnologia/jsonw no npm por publicação confiável (OIDC do GitHub, sem token guardado), com procedência.
+# Versão nova: suba a "version" de npm/package.json, faça o commit e crie a tag v<versão> (ex.: git tag v1.2.2 && git push --tags).
+# Pelo botão "Run workflow" sai só o ensaio (npm publish --dry-run), a menos que "ensaio" seja desmarcado.
+name: Publicar no npm
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      ensaio:
+        description: "Só ensaiar (npm publish --dry-run)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: npm com publicação confiável
+        run: npm install -g npm@latest && npm --version
+
+      - name: Montar o pacote
+        run: bash npm/montar.sh "$RUNNER_TEMP/jsonw"
+
+      - name: Versão igual à tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          V=$(node -p "require('$RUNNER_TEMP/jsonw/package.json').version")
+          test "v$V" = "$GITHUB_REF_NAME" || { echo "package.json diz $V e a tag é $GITHUB_REF_NAME"; exit 1; }
+
+      - name: Provar o pacote no Linux (addon e comando)
+        run: |
+          node -e "const j=require('$RUNNER_TEMP/jsonw'); if(!j.Leitor||!j.Escritor) throw new Error('addon sem Leitor/Escritor'); console.log('addon ok')"
+          cd "$RUNNER_TEMP" && printf '{"id":1,"nome":"a"}\n{"id":2,"nome":"b"}\n' > t.jsonl
+          node jsonw/bin/jsonw.js de-json t.jsonl t.jsw
+          node jsonw/bin/jsonw.js conferir t.jsw
+          test "$(node jsonw/bin/jsonw.js ver t.jsw --json | wc -l)" -eq 2
+
+      - name: Publicar
+        working-directory: ${{ runner.temp }}/jsonw
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.ensaio }}" = "true" ]; then
+            npm publish --access public --dry-run
+          else
+            npm publish --access public
+          fi
