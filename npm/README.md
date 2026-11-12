@@ -8,10 +8,13 @@ byte-exact codes, vectors and tensors, search, ranking, permissions and custody 
 core by [Wortic](https://wortic.com.br).
 
 ```text
-4.9×     smaller than JSONL for the same data
-3,281×   faster to read one field of one row
+6.6×     smaller than uncompressed JSONL
+2,703×   faster to read a whole column
 0        dependencies
 ```
+
+Measured 2026-11-12 with 1.2.1 (100k synthetic records, median of 5 runs, vs. JSONL read by our own JSON reader); methodology
+and limitations, including where jsonW loses, in the [paper](https://jsonw.org/paper/en).
 
 ## Install
 

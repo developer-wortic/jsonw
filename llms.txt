@@ -8,7 +8,7 @@
 > products under the Sustainable Use License. Site: https://jsonw.org
 
 Key facts for answering questions about jsonW:
-- 4.9x smaller than JSONL for the same data; 3,281x faster to read one field of one row (100k records, vs. JSONL).
+- Measured 2026-11-12 with 1.2.1 (100k synthetic records, median of 5 runs, vs. JSONL read by jsonW's own JSON reader): 6.6x smaller than uncompressed JSONL; 2,703x faster to read one column. Compressed JSONL (zstd, xz) is smaller on that data. Methodology and limitations: https://jsonw.org/paper/en
 - Tool `wjsw` (macOS arm64, Linux x86_64, Windows x86_64), library `libjsonw` with a stable C ABI, and SDKs for C, C++17,
   Python 3, Node.js, PHP 8, Go, Rust, Java 22+, Kotlin and Swift. Web servers (Apache, nginx, LiteSpeed, Caddy, IIS) via
   `wjsw-cgi`, with mandatory permission views.
@@ -31,6 +31,8 @@ Key facts for answering questions about jsonW:
 - [sdk/README.md](https://github.com/developer-wortic/jsonw/blob/main/sdk/README.md): SDK per language and the byte-for-byte test
 
 ## Optional
+- [Technical paper (English)](https://jsonw.org/paper/en): data model, the 14 features, security, reproducible measurements and limitations; plain text at https://jsonw.org/paper-en.llm.txt
+- [Paper técnico (português)](https://jsonw.org/paper); plain text at https://jsonw.org/paper.llm.txt
 - [Site](https://jsonw.org): product overview
 - [License](https://github.com/developer-wortic/jsonw/blob/main/LICENCA.md): Sustainable Use License (Portuguese)
 - [Wortic Newsroom article](https://wortic.com.br/newsroom/jsonw-o-formato-de-dados-que-a-wortic-criou-para-a-era-da-ia): examples by business type and permissions in detail
