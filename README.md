@@ -45,6 +45,17 @@ pelo nosso próprio leitor de JSON. O JSONL comprimido com zstd ou xz fica menor
 encurtam a diferença; a de ler só uma coluna vem do formato em colunas. Metodologia e limitações no
 <a href="https://jsonw.org/paper">paper</a>. Meça na sua máquina com <code>wjsw medir</code>.</sub>
 
+Com dados reais, a base inteira de marcas do INPI (7 arquivos CSV, 55,3 milhões de linhas, 12,53 GB, convertidos 1:1):
+
+```text
+4,5×     menor que o CSV (5,4× no nível máximo) e 8,8× menor que o XML
+1,7×     MAIOR que o Parquet, e o DuckDB lendo Parquet consultou de 10 a 31× mais rápido
+```
+<sub>Medido em 13/11/2026 com o 1.2.0 num servidor de 8 núcleos: três consultas por coluna, o menor de 5, Parquet gravado e
+lido pelo DuckDB 2.0.0. O <code>grep</code> no CSV contou errado uma das três (achou o valor em outra coluna); jsonW, Parquet e
+XML deram a conta certa. O XLSX não entra: 6 dos 7 arquivos passam de 1.048.576 linhas. Tabelas 5C e 5D do
+<a href="https://jsonw.org/paper#formatos-reais">paper</a>.</sub>
+
 ## Sumário
 
 - [Em 30 segundos](#em-30-segundos)
