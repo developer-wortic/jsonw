@@ -49,9 +49,10 @@ Com dados reais, a base inteira de marcas do INPI (7 arquivos CSV, 55,3 milhões
 
 ```text
 4,5×     menor que o CSV (5,4× no nível máximo) e 8,8× menor que o XML
-1,7×     MAIOR que o Parquet, e o DuckDB lendo Parquet consultou de 1,2 a 4,9× mais rápido
+1,7×     MAIOR que o Parquet, e o DuckDB lendo Parquet consultou de 1,3 a 4,7× mais rápido
+8%       menor com o 1.3.0 em preparação (1,5× o Parquet), e o histórico de um processo 21% mais rápido
 ```
-<sub>Medido em 13/11/2026 com o 1.2.1 num servidor de 8 núcleos: três consultas por coluna, o menor de 5, Parquet gravado e
+<sub>Medido em 13/11/2026 (quarta rodada) com o 1.2.1 e o 1.3.0 em preparação, na mesma hora, num servidor de 8 núcleos: três consultas por coluna, o menor de 5, Parquet gravado e
 lido pelo DuckDB 2.0.0. O <code>grep</code> no CSV contou errado uma das três (achou o valor em outra coluna); jsonW, Parquet e
 XML deram a conta certa. O XLSX não entra: 6 dos 7 arquivos passam de 1.048.576 linhas. Tabelas 5C e 5D do
 <a href="https://jsonw.org/paper#formatos-reais">paper</a>.</sub>
