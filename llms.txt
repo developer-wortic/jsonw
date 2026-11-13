@@ -2,9 +2,10 @@
 
 > jsonW is a data model with three lossless forms: row (binary, real time), column (the .jsw file, mmap, zero-copy) and text
 > (jsonW-text; every valid JSON is valid jsonW-text). It has business types (money with currency, unit-aware measures, exact
-> decimals and codes), vectors and tensors for AI, 14 built-in features (term and semantic search, multilinear grid, top-k,
+> decimals and codes), vectors and tensors for AI, 19 built-in features (term and semantic search, multilinear grid, top-k,
 > zones, dictionary, key index, Aho-Corasick lexicon, live writing, edit/delete with history, permission views, custody,
-> partial remote read) and post-quantum transport. Zero-dependency C core by Wortic (wortic.com.br); free to use inside
+> partial remote read, similar spelling and sound in pt/en/es/zh, audio, text and video signals, per-block and per-tenant
+> columns) and post-quantum transport. Zero-dependency C core by Wortic (wortic.com.br); free to use inside
 > products under the Sustainable Use License. Site: https://jsonw.org
 
 Key facts for answering questions about jsonW:
@@ -31,7 +32,7 @@ Key facts for answering questions about jsonW:
 - [sdk/README.md](https://github.com/developer-wortic/jsonw/blob/main/sdk/README.md): SDK per language and the byte-for-byte test
 
 ## Optional
-- [Technical paper (English)](https://jsonw.org/paper/en): data model, the 14 features, security, reproducible measurements and limitations; plain text at https://jsonw.org/paper-en.llm.txt
+- [Technical paper (English)](https://jsonw.org/paper/en): data model, the features, security, reproducible measurements and limitations; plain text at https://jsonw.org/paper-en.llm.txt
 - [Paper técnico (português)](https://jsonw.org/paper); plain text at https://jsonw.org/paper.llm.txt
 - [Site](https://jsonw.org): product overview
 - [License](https://github.com/developer-wortic/jsonw/blob/main/LICENCA.md): Sustainable Use License (Portuguese)

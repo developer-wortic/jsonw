@@ -48,6 +48,7 @@ wjsw info vendas.jsw                # esquema, blocos, tamanho, hash, zonas
 wjsw conferir vendas.jsw            # ok: 2 linhas, 1 blocos, sha256 e crc32c conferidos
 wjsw para-texto vendas.jsw --json   # exporta tudo para JSON, sem perda (o arquivo vem antes da opção)
 wjsw filtrar vendas.jsw "peso > 500; preco < 10 BRL" [saida.jsw]   # medida compara pela grandeza (500 = 500 g; vale "0,5 kg"); dinheiro pede a moeda
+wjsw filtrar marcas.jsw "nome ~~pt Kokakola"         # grafia e som parecidos (pt, en, es, zh; ~~pt@0.4 ajusta o limiar de 0 a 1)
 wjsw calcular vendas.jsw [--onde "..."] [--por campo] [--valor campo]   # contagem, soma exata, mín, máx, média
 wjsw comparar ontem.jsw hoje.jsw sku                 # só em a, só em b, mudou, iguais
 wjsw avaliar docs.jsw pesos "preco=-1,nota=2" 10     # as 10 melhores por nota
@@ -59,6 +60,9 @@ wjsw reparar vendas.jsw                              # gravação cortada: refaz
 WJSW_ESCOPOS="pessoal financeiro tenant:42" wjsw ver clinica.jsw   # ver com permissões
 ```
 A tabela de termos do `reconhecer` tem o esquema `termo:texto,forma:dic,sinal:dic,peso:f32,idioma:dic,origem:dic`.
+Sinais da comunicação (1.3.11, pela ABI em `sdk/jsonw.h`): `jsonw_sinal_audio` (PCM 16 bits mono), `jsonw_sinal_texto` e
+`jsonw_video_*` (quadros RGB24 e som) devolvem UMA linha de jsonW-texto no esquema de `jsonw_sinal_esquema`; medem, não decidem.
+Um `.jsw` gravado pela 1.3.11 com os codecs novos não abre em leitores 1.2.x.
 
 ## SDKs (nomes em português, iguais em todas as linguagens)
 - `Leitor(caminho)`: `linhas`, `esquema`, `campos`, `json(i)`, `texto(i)`, `campo(i, nome_ou_indice)`, `conferir()`,

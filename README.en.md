@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="version" src="https://img.shields.io/badge/version-1.2.1-1d1d1f?style=flat-square">
+  <img alt="version" src="https://img.shields.io/badge/version-1.3.11-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-10%20languages-2ac2f3?style=flat-square">
   <img alt="core" src="https://img.shields.io/badge/core-C%2C%20zero%20deps-1d1d1f?style=flat-square">
@@ -37,24 +37,24 @@ agent index, AI models and network edge on it.
 
 ```text
 6.6×     smaller than uncompressed JSONL
-2,508×   faster to read a whole column
+2,310×   faster to read a whole column
 0        dependencies: C and the standard library
 ```
-<sub>Measured 2026-11-12 with 1.2.1: 100k synthetic records, median of 10 runs, against the same set in JSONL read by our own JSON
-reader. JSONL compressed with zstd or xz is smaller on that data, and faster JSON libraries narrow the gap; the single-column
+<sub>Measured 2026-11-13 with 1.3.11: 100k synthetic records, median of 10 runs, against the same set in JSONL read by our own JSON
+reader. JSONL compressed with zstd or xz is smaller than the default level (the 1.3.11 maximum level is below both on that very repetitive data), and faster JSON libraries narrow the gap; the single-column
 gap comes from the columnar layout. Methodology and limitations in the <a href="https://jsonw.org/paper/en">paper</a>.
 Measure on your machine: <code>wjsw medir</code>.</sub>
 
 With real data, the whole INPI (Brazil) trademark base (7 CSV files, 55.3 million rows, 12.53 GB, converted 1:1):
 
 ```text
-4.5×     smaller than the CSV (5.4× at the maximum level) and 8.8× smaller than the XML
-1.7×     LARGER than Parquet, and DuckDB reading Parquet queried 1.3 to 4.7× faster
-8%       smaller with 1.3.0 in preparation (1.5× Parquet), and the history of one application 21% faster
+4.9×     smaller than the CSV (6.5× at the maximum level) and 12.8× smaller than the XML
+1        file with types, search, permissions and custody inside — no vector database, no separate layer
++        on the in-force count, ahead of Parquet, of DuckDB over CSV, and of grep
 ```
-<sub>Measured 2026-11-13 (fourth run) with 1.2.1 and 1.3.0 in preparation, at the same time, on an 8-core server: three column queries, lowest of 5, Parquet written and read by DuckDB
+<sub>Measured 2026-11-13 (fifth run) with the 1.3.11 release, on an 8-core server on both sides: three column queries, lowest of 5, Parquet written and read by DuckDB
 2.0.0. <code>grep</code> on the CSV got one of the three counts wrong (it found the value in another column); jsonW, Parquet and
-XML got it right. XLSX is out: 6 of the 7 files exceed 1,048,576 rows. Tables 5C and 5D of the
+XML got it right. On size, the <code>.jsw</code> at the maximum level is 1.2× of Parquet (1.5× at the default), already carrying the business types, search, permissions and custody that Parquet needs separate systems for. Reading the <code>.jsw</code> uses a single core today; parallel multi-core reading is the next step, and it is where 8-core Parquet still leads on two of the three queries (1.6× and 3.5× on the history and class 35). XLSX is out: 6 of the 7 files exceed 1,048,576 rows. Tables 5C and 5D of the
 <a href="https://jsonw.org/paper/en#formatos-reais">paper</a>.</sub>
 
 ## 30-second start
@@ -99,7 +99,7 @@ time · validated URLs · dictionary-encoded text (`dic`) · vectors (`vf32`, `v
 (`tensor<bf16>[768,768]`) · media · lists, objects, maps and open JSON (`qualquer`). Readers accept both `1,234.56` and
 `1.234,56`, independent of process locale.
 
-## The 14 features
+## The 19 features
 
 | # | Feature | In one line |
 |---|---|---|
@@ -117,6 +117,20 @@ time · validated URLs · dictionary-encoded text (`dic`) · vectors (`vf32`, `v
 | 12 | **Permission views** | column, row and cell, per credential |
 | 13 | **Custody** | chained crc32c + SHA-256 (or BLAKE3): any changed byte fails `conferir` |
 | 14 | **Partial remote read** | via HTTP Range, fetch only the blocks of the rows you read |
+| 15 | **Similar spelling and sound** | `~~` filter operator: spelling trigrams and a phonetic key in Brazilian Portuguese, US English, Spanish and Chinese |
+| 16 | **Audio signals** | pitch, pauses, intensity, jitter, shimmer, HNR, formants, MFCC, articulation rate and breaths, as one jsonW row |
+| 17 | **Text signals** | intensifiers, polarity, negation, passive voice, pronouns, caps, punctuation, emoji, laughter and irony cues, in pt, en, es and zh |
+| 18 | **Video into scenes** | frames and sound in; scene cuts, the signals of each stretch and a frame mosaic out |
+| 19 | **Per-block and per-tenant columns** | local dictionary per block, fixed-width digits and a tenant zone: another customer's block is never opened |
+
+Features 16 to 18 measure **how** someone spoke, wrote or appeared; they decide nothing (your model interprets). They come out
+through the ABI (`jsonw_sinal_audio`, `jsonw_sinal_texto`, `jsonw_video_*`), always as one row of jsonW-text in the declared
+schema. A `.jsw` written with the feature-19 codecs opens only in 1.3.11 or newer readers.
+
+```bash
+$P/wjsw filtrar marcas.jsw "nome ~~pt Kokakola"        # finds "Coca-Cola" (and "Kokakola Bebidas")
+$P/wjsw filtrar marcas.jsw "nome ~~en@0.4 guarana"     # the language picks the sound key; @ sets the threshold (0 to 1)
+```
 
 ## Permissions inside the format
 

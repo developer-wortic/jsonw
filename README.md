@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="versão" src="https://img.shields.io/badge/vers%C3%A3o-1.2.1-1d1d1f?style=flat-square">
+  <img alt="versão" src="https://img.shields.io/badge/vers%C3%A3o-1.3.11-1d1d1f?style=flat-square">
   <img alt="plataformas" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binários-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-10%20linguagens-2ac2f3?style=flat-square">
   <img alt="núcleo" src="https://img.shields.io/badge/núcleo-C%20sem%20dependência-1d1d1f?style=flat-square">
@@ -37,24 +37,24 @@ ranking, permissão e custódia **dentro do próprio formato**. Núcleo em C, se
 
 ```text
 6,6×     menor que o JSONL sem compressão
-2.508×   mais rápido para ler uma coluna inteira
+2.310×   mais rápido para ler uma coluna inteira
 0        dependências: C e a biblioteca padrão
 ```
-<sub>Medido em 12/11/2026 com o 1.2.1: 100 mil registros sintéticos, mediana de 10 execuções, contra o mesmo conjunto em JSONL lido
-pelo nosso próprio leitor de JSON. O JSONL comprimido com zstd ou xz fica menor nesses dados, e leitores de JSON mais rápidos
+<sub>Medido em 13/11/2026 com o 1.3.11: 100 mil registros sintéticos, mediana de 10 execuções, contra o mesmo conjunto em JSONL lido
+pelo nosso próprio leitor de JSON. O JSONL comprimido com zstd ou xz fica menor que o nível padrão (o nível máximo da 1.3.11 fica abaixo dos dois nesses dados, muito repetitivos), e leitores de JSON mais rápidos
 encurtam a diferença; a de ler só uma coluna vem do formato em colunas. Metodologia e limitações no
 <a href="https://jsonw.org/paper">paper</a>. Meça na sua máquina com <code>wjsw medir</code>.</sub>
 
 Com dados reais, a base inteira de marcas do INPI (7 arquivos CSV, 55,3 milhões de linhas, 12,53 GB, convertidos 1:1):
 
 ```text
-4,5×     menor que o CSV (5,4× no nível máximo) e 8,8× menor que o XML
-1,7×     MAIOR que o Parquet, e o DuckDB lendo Parquet consultou de 1,3 a 4,7× mais rápido
-8%       menor com o 1.3.0 em preparação (1,5× o Parquet), e o histórico de um processo 21% mais rápido
+4,9×     menor que o CSV (6,5× no nível máximo) e 12,8× menor que o XML
+1        arquivo com tipo, busca, permissão e custódia dentro — sem banco de vetores nem camada à parte
++        na contagem em vigor, à frente do Parquet, do DuckDB sobre CSV e do grep
 ```
-<sub>Medido em 13/11/2026 (quarta rodada) com o 1.2.1 e o 1.3.0 em preparação, na mesma hora, num servidor de 8 núcleos: três consultas por coluna, o menor de 5, Parquet gravado e
+<sub>Medido em 13/11/2026 (quinta rodada) com o 1.3.11 do lançamento, num servidor de 8 núcleos dos dois lados: três consultas por coluna, o menor de 5, Parquet gravado e
 lido pelo DuckDB 2.0.0. O <code>grep</code> no CSV contou errado uma das três (achou o valor em outra coluna); jsonW, Parquet e
-XML deram a conta certa. O XLSX não entra: 6 dos 7 arquivos passam de 1.048.576 linhas. Tabelas 5C e 5D do
+XML deram a conta certa. No tamanho, o <code>.jsw</code> no nível máximo fica 1,2× do Parquet (1,5× no padrão), já carregando tipo de negócio, busca, permissão e custódia que o Parquet precisa de sistemas à parte para ter. A leitura do <code>.jsw</code> hoje usa um núcleo; a leitura paralela multinúcleo é o próximo passo e é onde o Parquet de 8 núcleos ainda rende mais em duas das três consultas (1,6× e 3,5× no histórico e na classe 35). O XLSX não entra: 6 dos 7 arquivos passam de 1.048.576 linhas. Tabelas 5C e 5D do
 <a href="https://jsonw.org/paper#formatos-reais">paper</a>.</sub>
 
 ## Sumário
@@ -62,7 +62,7 @@ XML deram a conta certa. O XLSX não entra: 6 dos 7 arquivos passam de 1.048.576
 - [Em 30 segundos](#em-30-segundos)
 - [Três formas, um modelo](#três-formas-um-modelo)
 - [Os tipos que o JSON não tem](#os-tipos-que-o-json-não-tem)
-- [Os 14 recursos](#os-14-recursos)
+- [Os 19 recursos](#os-19-recursos)
 - [Permissão dentro do formato](#permissão-dentro-do-formato)
 - [Um arquivo que não quebra](#um-arquivo-que-não-quebra)
 - [Feito para IA](#feito-para-ia)
@@ -141,7 +141,7 @@ muda de tipo; o leitor resolve pelo nome, então arquivo velho é lido por códi
 
 **Vírgula ou ponto:** quem lê aceita `1.234,56` e `1,234.56`, e um JVM ou PHP configurado em pt-BR não troca o separador.
 
-## Os 14 recursos
+## Os 19 recursos
 
 | # | Recurso | Em uma linha |
 |---|---|---|
@@ -159,6 +159,20 @@ muda de tipo; o leitor resolve pelo nome, então arquivo velho é lido por códi
 | 12 | **Visão por permissão** | coluna, linha e célula, conforme a credencial |
 | 13 | **Custódia** | crc32c + SHA-256 (ou BLAKE3) em cadeia: qualquer byte trocado falha no `conferir` |
 | 14 | **Leitura remota parcial** | com cabeçalho e rodapé (HTTP Range), baixa só os blocos das linhas lidas |
+| 15 | **Grafia e som parecidos** | operador `~~` no filtro: trigramas da grafia e chave fonética em pt-BR, inglês americano, espanhol e chinês |
+| 16 | **Sinais do áudio** | tom, pausas, intensidade, jitter, shimmer, HNR, formantes, MFCC, taxa de articulação e respirações, em uma linha de jsonW |
+| 17 | **Sinais do texto** | intensificadores, polaridade, negação, voz passiva, pronomes, caixa alta, pontuação, emoji, risos e indícios de ironia, em pt, en, es e zh |
+| 18 | **Vídeo em cenas** | quadros e som entram; saem os cortes de cena, os sinais de cada trecho e um mosaico dos quadros |
+| 19 | **Coluna por bloco e por tenant** | dicionário local por bloco, dígitos de largura fixa e zona do tenant: o bloco de outro cliente nem abre |
+
+Os recursos 16 a 18 medem **como** a pessoa falou, escreveu ou apareceu; não decidem nada (quem interpreta é o seu modelo). Saem
+pela ABI (`jsonw_sinal_audio`, `jsonw_sinal_texto`, `jsonw_video_*`), sempre como uma linha de jsonW-texto no esquema declarado.
+Um `.jsw` gravado com os codecs do recurso 19 só abre em leitores 1.3.11 ou mais novos.
+
+```bash
+$P/wjsw filtrar marcas.jsw "nome ~~pt Kokakola"        # acha "Coca-Cola" (e "Kokakola Bebidas")
+$P/wjsw filtrar marcas.jsw "nome ~~en@0.4 guarana"     # a língua escolhe a chave do som; @ ajusta o limiar (0 a 1)
+```
 
 ## Permissão dentro do formato
 
@@ -461,7 +475,7 @@ resto sai filtrado, com a visão por permissão obrigatória. Configurações pr
 
 > **Quem instalou a configuração da 1.2.0 ou anterior deve trocar pela nova.** Nela o servidor entregava o `.jsw` por
 > conta própria quando o pedido vinha sem parâmetro, e o arquivo cru saía com as colunas `+pessoal`/`+escopo(x)` e as linhas
-> de todos os tenants. Na 1.2.1 nenhum `.jsw` é servido sem passar pelo `wjsw-cgi`.
+> de todos os tenants. Desde a 1.2.1 nenhum `.jsw` é servido sem passar pelo `wjsw-cgi`.
 
 | Pedido | Resposta |
 |---|---|
@@ -503,7 +517,7 @@ linguagem, no padrão llms.txt. O mesmo `llms.txt` está em [jsonw.org/llms.txt]
   próprio jsonW como serviço nem fazer engenharia reversa do núcleo. O núcleo em C é da Wortic; a documentação pode ser lida,
   citada e usada livremente para criar programas que usem o jsonW.
 - **Contagem de instalações:** na primeira execução em cada máquina, o `wjsw` envia só a versão e a plataforma (por exemplo
-  `v=1.2.1&so=linux-x86_64`) e grava `~/.jsonw/instalou`. Nada de nome, caminho, dado ou IP é guardado. Desligue antes com
+  `v=1.3.11&so=linux-x86_64`) e grava `~/.jsonw/instalou`. Nada de nome, caminho, dado ou IP é guardado. Desligue antes com
   `JSONW_SEM_PING=1` ou `~/.jsonw/sem-ping`. **A biblioteca e os SDKs nunca acessam a rede.**
 
 ---
