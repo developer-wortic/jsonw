@@ -49,9 +49,9 @@ With real data, the whole INPI (Brazil) trademark base (7 CSV files, 55.3 millio
 
 ```text
 4.5×     smaller than the CSV (5.4× at the maximum level) and 8.8× smaller than the XML
-1.7×     LARGER than Parquet, and DuckDB reading Parquet queried 10 to 31× faster
+1.7×     LARGER than Parquet, and DuckDB reading Parquet queried 2.3 to 5.5× faster
 ```
-<sub>Measured 2026-11-13 with 1.2.0 on an 8-core server: three column queries, lowest of 5, Parquet written and read by DuckDB
+<sub>Measured 2026-11-13 with 1.2.1 on an 8-core server: three column queries, lowest of 5, Parquet written and read by DuckDB
 2.0.0. <code>grep</code> on the CSV got one of the three counts wrong (it found the value in another column); jsonW, Parquet and
 XML got it right. XLSX is out: 6 of the 7 files exceed 1,048,576 rows. Tables 5C and 5D of the
 <a href="https://jsonw.org/paper/en#formatos-reais">paper</a>.</sub>
