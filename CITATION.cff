@@ -5,7 +5,7 @@ type: software
 authors:
   - name: Wortic
     website: "https://wortic.com.br"
-version: 1.3.13
+version: 1.3.14
 date-released: 2026-11-14
 url: "https://jsonw.org"
 repository-code: "https://github.com/developer-wortic/jsonw"

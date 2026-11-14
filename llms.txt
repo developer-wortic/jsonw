@@ -8,7 +8,7 @@
 > dictionary, key index, Aho-Corasick lexicon, live writing, edit/delete with history, permission views, custody, partial
 > remote read over HTTP Range, similar spelling and sound in pt/en/es/zh, audio, text and video signals, per-block and
 > per-tenant columns. Post-quantum transport. Zero-dependency C core by Wortic (wortic.com.br), free to use inside products
-> under the Sustainable Use License. Current version 1.3.13. Site: https://jsonw.org
+> under the Sustainable Use License. Current version 1.3.14. Site: https://jsonw.org
 
 ## Key facts
 - Measured 2026-11-13 with 1.3.11 (100k synthetic records, median of 10 runs, vs. JSONL read by jsonW's own JSON reader):
@@ -18,9 +18,14 @@
   level), 12.8x smaller than the XML; .jsw at the maximum level is 1.2x the size of Parquet. 8-core Parquet (DuckDB 2.0.0)
   still reads faster on two of three column queries (1.6x and 3.5x); jsonW reads with one core today.
 - Key lookup (1.3.13): 0.196 ms median in a 1-million-row file after `indexar`, versus 142.8 ms scanning.
-- Node.js and TypeScript: `npm install @wortictecnologia/jsonw` (prebuilt for macOS arm64 and Linux x64; `import` and
-  `require`; types in index.d.ts; `jsonw` CLI). Server-side in Next.js, Remix, Astro, Nuxt, SvelteKit, NestJS, Express.
-- SDKs for 11 languages over a stable C ABI: C, C++17, Python 3, Node.js, PHP 8, Ruby, Go, Rust, Java 22+, Kotlin, Swift.
+- Node.js 22.12+ and TypeScript: `npm install @wortictecnologia/jsonw` (prebuilt for macOS arm64 and Linux x64; ESM
+  `import` and `require`; generic types in index.d.ts; `jsonw` CLI). Server-side in Next.js, Remix, Astro, Nuxt, SvelteKit,
+  NestJS, Express.
+- Browser, React Native, Deno, Bun and edge (1.3.14): `import { carregar } from "@wortictecnologia/jsonw/wasm"` runs the same
+  C core as WebAssembly (193 KB) and opens a .jsw from bytes: rows, search, key lookup, scoring, custody check. Read-only;
+  writing stays on the server. React Native (Hermes) uses the `polywasm` implementation.
+- SDKs for 15 languages over a stable C ABI: C, C++23, Python 3.10+, Node.js, PHP 8.4+ (Composer, Laravel, WordPress),
+  Ruby 4, Go, Rust 2024, Java 22+, Kotlin, Swift 6, Dart (Flutter), Objective-C (iOS, macOS) and COBOL (GnuCOBOL).
   Tool `wjsw` and `libjsonw` for macOS arm64, Linux x86_64 and ARM64, Windows x86_64.
 - Databases: `wcon` converts PostgreSQL, MySQL/MariaDB, SQLite, Redis/Valkey and MongoDB to .jsw and back with no loss
   (schema from each column's type; numeric stays exact decimal; pgvector becomes vf32/vf16). `wremoto` reads a .jsw on R2,

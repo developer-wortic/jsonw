@@ -259,16 +259,20 @@ rodam as operações, e todos passam pela **mesma prova, byte a byte** (`cd sdk 
 | Linguagem | Onde | Como |
 |---|---|---|
 | C | `sdk/jsonw.h` + `libjsonw` | `jsonw_abrir`, `jsonw_campo_json`, `jsonw_criar`, `jsonw_gravar_json` |
-| C++17 | `sdk/cpp/jsonw.hpp` | `jsonw::Leitor`, `jsonw::Escritor` (RAII) |
-| Python 3 | `sdk/python/jsonw.py` | `jsonw.Leitor`, `jsonw.Escritor` |
-| Node.js | `npm install @wortictecnologia/jsonw` (N-API, pré-compilado) | `{ Leitor, Escritor }` |
-| PHP 8 | `sdk/php/jsonw.php` (FFI) | `JsonW\Leitor`, `JsonW\Escritor` |
-| Ruby 2.6+ | `sdk/ruby/jsonw.rb` (Fiddle, da biblioteca padrão) | `JsonW::Leitor`, `JsonW::Escritor` |
+| C++23 | `sdk/cpp/jsonw.hpp` | `jsonw::Leitor`, `jsonw::Escritor` (RAII) |
+| Python 3.10+ | `sdk/python/jsonw.py` | `jsonw.Leitor`, `jsonw.Escritor` |
+| Node.js 22.12+ · TypeScript | `npm install @wortictecnologia/jsonw` (N-API, pré-compilado, ESM e `require`) | `{ Leitor, Escritor }` |
+| Navegador · React Native · Deno · Bun · borda | `import { carregar } from "@wortictecnologia/jsonw/wasm"` (WebAssembly, só leitura) | `jsonw.abrir(bytes)` |
+| PHP 8.4+ · Laravel · WordPress | `composer require wortictecnologia/jsonw` (FFI); plugin em `sdk/php/wordpress` | `JsonW\Leitor`, `JsonW\Escritor` |
+| Ruby 4 | `sdk/ruby/jsonw.rb` (Fiddle, da biblioteca padrão) | `JsonW::Leitor`, `JsonW::Escritor` |
 | Go | `sdk/go/` (cgo) | `jsonw.Abrir`, `jsonw.Criar` |
-| Rust | `sdk/rust/` | `jsonw::Leitor`, `jsonw::Escritor` |
+| Rust (edição 2024) | `sdk/rust/` | `jsonw::Leitor`, `jsonw::Escritor` |
 | Java 22+ | `sdk/java/Jsonw.java` (FFM, sem JNI) | `Jsonw.Leitor`, `Jsonw.Escritor` |
 | Kotlin | `sdk/kotlin/Jsonw.kt` (FFM) | `Jsonw.Leitor`, `Jsonw.Escritor` |
-| Swift 5+ | `sdk/swift/jsonw.swift` | `Leitor`, `Escritor` |
+| Swift 6 | `sdk/swift/jsonw.swift` | `Leitor`, `Escritor` |
+| Dart · Flutter | `sdk/dart/` (`dart:ffi`) | `Leitor`, `Escritor` |
+| Objective-C (iOS, macOS) | `sdk/objc/JsonW.h` | `JWLeitor`, `JWEscritor` |
+| COBOL (GnuCOBOL 3.2+) | `sdk/cobol/ler.cob` | `CALL STATIC "jsonw_abrir"` |
 
 <details>
 <summary><b>Python</b></summary>

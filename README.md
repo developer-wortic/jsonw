@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="version" src="https://img.shields.io/badge/version-1.3.13-1d1d1f?style=flat-square">
+  <img alt="version" src="https://img.shields.io/badge/version-1.3.14-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-11%20languages-2ac2f3?style=flat-square">
   <img alt="TypeScript types" src="https://img.shields.io/badge/TypeScript-types%20included-3178c6?style=flat-square">
@@ -67,6 +67,10 @@ XML got it right. On size, the <code>.jsw</code> at the maximum level is 1.2× o
 | You use | Install | Then |
 |---|---|---|
 | **Node.js · TypeScript** (Next.js, Remix, Astro, Nuxt, SvelteKit, SolidStart, Angular SSR, NestJS, Express) | `npm install @wortictecnologia/jsonw` | `import { Leitor, Escritor } from "@wortictecnologia/jsonw"`; types ship in `index.d.ts` |
+| **Browser · React Native · Deno · Bun · edge** | `npm install @wortictecnologia/jsonw` | `import { carregar } from "@wortictecnologia/jsonw/wasm"`; the same C core in WebAssembly (193 KB), read-only ([`sdk/wasm`](sdk/wasm/)) |
+| **Flutter · Dart** | [`sdk/dart`](sdk/dart/) plus `libjsonw` from `bin/` | `dart:ffi`, `Leitor('data.jsw')` |
+| **iOS · macOS (Objective-C)** | [`sdk/objc`](sdk/objc/) plus `libjsonw` from `bin/` | `[JWLeitor leitorComCaminho:erro:]`, Swift names included |
+| **COBOL** (GnuCOBOL 3.2+) | [`sdk/cobol`](sdk/cobol/) plus `libjsonw` from `bin/` | `CALL STATIC "jsonw_abrir"`, no C glue |
 | **Command line** (macOS, Linux, Windows) | `npx -p @wortictecnologia/jsonw jsonw` or the binaries in [`bin/`](bin/) | `jsonw de-json data.jsonl data.jsw` |
 | **Python · Go · Rust · Java · Kotlin · Swift · PHP · Ruby · C · C++** | the SDK folder in [`sdk/`](sdk/) plus `libjsonw` from `bin/` | one class per role: `Leitor` (reader), `Escritor` (writer) |
 | **PostgreSQL · MySQL · MariaDB · SQLite · Redis · MongoDB** | `wcon` from `bin/` | `wcon pg "select …" out.jsw`, round trip with no loss |
@@ -348,9 +352,14 @@ wjsw avaliar chunks.jsw cosseno v "<your query embedding>" 5     # top 5 by cosi
 in the same request.
 
 **How do I use jsonW with TypeScript, React or Next.js?**
-`npm install @wortictecnologia/jsonw` and read or write in server code (Route Handlers, Server Actions, API routes, loaders).
-Both `import` and `require` work and the types are included. Send the rows the session may see to your React, Vue, Svelte or
-Solid components; the permission view runs on the server.
+`npm install @wortictecnologia/jsonw`. On the server (Route Handlers, Server Actions, API routes, loaders) read and write with
+`import { Leitor, Escritor } from "@wortictecnologia/jsonw"`; both `import` and `require` work and the types are included.
+
+**Can I read `.jsw` in the browser or in React Native?**
+Yes, since 1.3.14. `import { carregar } from "@wortictecnologia/jsonw/wasm"` loads the same C core as WebAssembly and opens a
+`.jsw` from bytes (a `fetch`, an asset): rows, search, key lookup, scoring and custody check, with no server. It runs in the
+browser, Deno, Bun and edge functions; in React Native (Hermes has no WebAssembly) pass the `polywasm` implementation. Writing
+stays on the server. For data with permissions, keep the view on the server and send only the rows the session may see.
 
 **Can I query a `.jsw` file on S3 or Cloudflare R2 without downloading it?**
 Yes. `wremoto filtrar r2://bucket/file.jsw "qty > 100"` fetches the header, the footer and only the blocks whose zones can
@@ -388,7 +397,7 @@ the [Sustainable Use License](LICENCA.md). The C core ships as compiled binaries
   title   = {jsonW: a data format for the AI era},
   author  = {{Wortic}},
   year    = {2026},
-  version = {1.3.13},
+  version = {1.3.14},
   url     = {https://jsonw.org}
 }
 ```
