@@ -89,8 +89,19 @@ library itself never touches the network.
 **jsonW or Parquet?** jsonW when you need money, units, exact codes, semantic search, per-customer permissions or custody in
 the file. Parquet still reads faster on many cores for some scans; the numbers are in the [paper](https://jsonw.org/paper/en).
 
-**Does it run in the browser or React Native?** The reader runs on the server, next to the data and the credentials, so hidden
-columns never reach the client. Send the permitted rows to your components.
+**Does it run in the browser or React Native?** Yes, for reading. `import { carregar } from "@wortictecnologia/jsonw/wasm"`
+loads the same C core as WebAssembly (193 KB) and opens a `.jsw` from bytes, in the browser, Deno, Bun, edge functions and
+React Native (pass `polywasm`, since Hermes has no WebAssembly). Writing stays on the server, and data with permissions is
+filtered on the server before it reaches the client.
+
+```ts
+import { carregar } from "@wortictecnologia/jsonw/wasm";
+
+const jsonw = await carregar();
+const sales = jsonw.abrir(await (await fetch("/sales.jsw")).arrayBuffer());
+sales.conferir();
+for (const row of sales) console.log(row);
+```
 
 ## More
 
