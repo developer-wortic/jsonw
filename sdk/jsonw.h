@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define JSONW_VERSAO "1.2.1"
+#define JSONW_VERSAO "1.3.12"
 #ifndef JSONW_API
 #  if defined(_WIN32)
 #    define JSONW_API __declspec(dllexport)
@@ -61,6 +61,32 @@ JSONW_API void *jsonw_reconhecedor(const char *termos_jsw, char *erro, size_t ne
 JSONW_API void jsonw_reconhecedor_fechar(void *r);
 JSONW_API int64_t jsonw_reconhecer(void *r, const char *texto, size_t n, char *saida, size_t cap);
    /* {"termos":[{"termo":linha,"ini":..,"fim":..,"texto":"..","sinal":"..","peso":..}],"sinais":[{"sinal":"..","soma":..,"vezes":..}]} (sinais da maior soma para a menor) */
+
+/* sinais da comunicacao (1.3.0, recursos 16 e 17): mede COMO a pessoa falou ou escreveu; cada medida sai como UMA linha de
+ * jsonW-texto no esquema de jsonw_sinal_esquema (gravavel direto com jsonw_gravar_json). Saida curta -2, erro -1. */
+#define JSONW_SINAL_AUDIO 16
+#define JSONW_SINAL_TEXTO 17
+JSONW_API const char *jsonw_sinal_esquema(int qual);   /* JSONW_SINAL_AUDIO ou JSONW_SINAL_TEXTO; NULL se outro */
+JSONW_API int64_t jsonw_sinal_audio(const int16_t *pcm, size_t n, int taxa, const char *origem, const char *chave, char *saida, size_t cap, char *erro, size_t nerro);
+   /* PCM 16 bits mono, n amostras, taxa em Hz: duracao, pausas, articulacao, intensidade, F0, jitter, shimmer, HNR, formantes,
+    * MFCC (vf32[13]), centroide, respiracoes (algoritmos do Praat/eGeMAPS, em C). Medida que nao existe sai null. */
+JSONW_API int64_t jsonw_sinal_texto(const char *texto, size_t n, const char *lexico_jsw, const char *origem, const char *chave, char *saida, size_t cap, char *erro, size_t nerro);
+   /* UTF-8: forma (caixa alta, pontuacao, emoji, kaomoji, repeticao), lexico (lexico-pt.jsw pelo RECONHECER: intensificadores,
+    * polaridade, negacao, pronomes, passiva, disfluencias) e indicios de ironia; lexico_jsw NULL = so a forma */
+
+/* video (1.3.0, recurso 18): quem chama decodifica e entrega os quadros em RGB24 (na cadencia que quiser; 2 por segundo
+ * basta) e o som em PCM 16 bits mono. O jsonW corta as cenas (Otsu sobre a diferenca entre quadros, so se a serie for
+ * bimodal), mede cada cena (luz, contraste, saturacao, movimento, cores vf32[12], forma vf32[64] para cosseno, dHash e os
+ * sinais do audio do trecho) e monta o mosaico dos quadros de cada cena. */
+#define JSONW_SINAL_VIDEO 18
+JSONW_API void *jsonw_video_novo(int largura, int altura, double fps, char *erro, size_t nerro);
+JSONW_API int jsonw_video_quadro(void *v, const uint8_t *rgb, size_t passo);          /* passo = bytes por linha (0 = 3*largura); 0 = ok */
+JSONW_API int jsonw_video_audio(void *v, const int16_t *pcm, size_t n, int taxa);     /* o tempo 0 e o do 1o quadro; 0 = ok */
+JSONW_API int64_t jsonw_video_cenas(void *v);                                          /* corta e devolve quantas cenas */
+JSONW_API int64_t jsonw_video_cena(void *v, int64_t cena, const char *origem, const char *chave, char *saida, size_t cap);   /* a cena como UMA linha de jsonW-texto (esquema 18) */
+JSONW_API int64_t jsonw_video_mosaico(void *v, int64_t cena, int colunas, int linhas, uint8_t *rgb, size_t cap, int *largura, int *altura);
+   /* RGB24 da grade colunas x linhas (miniaturas de 160 px, borda branca de 4 px); devolve os bytes, -2 com cap curto (largura e altura ja vem) */
+JSONW_API void jsonw_video_fechar(void *v);
 #ifdef __cplusplus
 }
 #endif

@@ -1,6 +1,6 @@
 {
   "name": "@wortictecnologia/jsonw",
-  "version": "1.3.11",
+  "version": "1.3.12",
   "description": "jsonW (json Wondrous): the data format built for the AI era. One model, three lossless forms (row, column, text), with money, measures, vectors, search, permissions and custody inside the file. Zero-dependency C core.",
   "main": "index.js",
   "types": "index.d.ts",
