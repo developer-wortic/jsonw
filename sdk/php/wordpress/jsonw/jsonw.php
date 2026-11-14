@@ -3,7 +3,7 @@
  * Plugin Name:       jsonW
  * Plugin URI:        https://jsonw.org
  * Description:       Lê arquivos .jsw no WordPress (temas, plugins e WP-CLI) pelo SDK de PHP do jsonW.
- * Version:           1.3.13
+ * Version:           1.3.14
  * Requires at least: 6.6
  * Requires PHP:      8.4
  * Author:            Wortic
