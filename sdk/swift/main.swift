@@ -12,7 +12,7 @@ do {
         print(try a.avaliar(args[3], k: Int(args[4]) ?? 10))
     } else if args.count == 6 && args[1] == "--visao" {   // --visao arq escopos pedido k: campos, as linhas visiveis (JSONL) e o avaliar
         let a = try Leitor(args[2]); try a.visao(args[3]); print(a.campos.joined(separator: ","))
-        for i in 0..<a.linhas { do { print(try a.json(i)) } catch is LinhaOculta {} }
+        for i in 0..<a.linhas { do { print(try a.json(i)) } catch .linhaOculta {} }
         print(try a.avaliar(args[4], k: Int(args[5]) ?? 10))
     } else if args.count == 4 && args[1] == "--reconhecer" {
         let r = try Reconhecedor(args[2])

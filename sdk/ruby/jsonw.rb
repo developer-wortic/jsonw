@@ -112,7 +112,7 @@ module JsonW
     def json(i); JsonW.texto(:linha_json, @a, i); end
     def texto(i); JsonW.texto(:linha_texto, @a, i); end
     def linha(i); JSON.parse(json(i)); end
-    def campo(i, campo); JSON.parse(JsonW.texto(:campo_json, @a, i, campo.is_a?(Integer) ? campo : @campos.index(campo)), quirks_mode: true); end
+    def campo(i, campo); JSON.parse(JsonW.texto(:campo_json, @a, i, indice_de(campo))); end
     def size; @linhas; end
 
     def conferir
@@ -141,7 +141,7 @@ module JsonW
     def tem_indice?(campo); F[:tem_indice].call(@a, indice_de(campo)) == 1; end
 
     def chave(campo, valor)
-      v = JSON.generate(valor, quirks_mode: true).b   # o valor em Ruby (2, "RJ", nil) vira o JSON do campo
+      v = JSON.generate(valor).b
       k = indice_de(campo); cap = 16
       loop do
         out = Fiddle::Pointer.malloc(8 * cap, Fiddle::RUBY_FREE)
@@ -183,13 +183,13 @@ module JsonW
     def self.criar(caminho, esquema, **op)
       w = new(caminho, esquema, **op)
       return w unless block_given?
+      ok = false
       begin
         yield w
-      rescue StandardError
-        w.abandonar   # saiu por erro: nada e publicado (o arquivo pela metade nao toma o lugar do destino)
-        raise
+        ok = true
+      ensure
+        ok ? w.fechar : w.abandonar   # saiu por erro: o destino fica como estava
       end
-      w.fechar
     end
 
     def initialize(caminho, esquema, compressao: 1, hash_alg: 0, bloco_kb: 0)

@@ -1,60 +1,99 @@
-// jsonW (json Wondrous) para Node.js: tipos do SDK (index.js).
+/** Um valor de campo, como sai do JSON. */
+export type Valor = string | number | boolean | null | Valor[] | { [campo: string]: Valor };
 
 /** Uma linha do arquivo, como objeto JSON. */
-export type Linha = Record<string, unknown>;
+export type Linha = Record<string, Valor>;
 
 /** Resultado de avaliar: as k melhores linhas, da maior nota para a menor. */
-export interface Nota { linha: number; nota: number }
+export interface Nota {
+  readonly linha: number;
+  readonly nota: number;
+}
 
-/** Lê um arquivo .jsw (acesso direto por linha e campo, sem decodificar o resto). */
-export class Leitor implements Iterable<Linha> {
+/** Pedido de nota em JSON: {"pesos":..}, {"cosseno":..}, {"esparso":..} ou {"grade":..}. */
+export type Pedido = string | Readonly<Record<string, unknown>>;
+
+export interface TermoReconhecido {
+  readonly termo: string;
+  readonly ini: number;
+  readonly fim: number;
+  readonly texto: string;
+  readonly sinal: string;
+  readonly peso: number;
+}
+
+export interface SinalReconhecido {
+  readonly sinal: string;
+  readonly soma: number;
+  readonly vezes: number;
+}
+
+export interface OpcoesEscritor {
+  /** 0 nenhuma, 1 rápida (padrão), 2 máxima. */
+  readonly compressao?: 0 | 1 | 2;
+  /** 0 SHA-256 (padrão), 1 BLAKE3. */
+  readonly hash?: 0 | 1;
+  /** Tamanho do bloco em KB (0 = padrão). */
+  readonly blocoKb?: number;
+}
+
+/** Versão da biblioteca. */
+export declare const versao: string;
+
+/** true quando o erro é de uma linha de outro tenant, escondida por `visao()`. */
+export declare function ehOculta(e: unknown): boolean;
+
+/**
+ * Lê um arquivo .jsw (acesso direto por linha e campo, sem decodificar o resto).
+ * Com `using`, fecha sozinho no fim do bloco.
+ */
+export declare class Leitor<L extends Linha = Linha> implements Iterable<L>, Disposable {
   constructor(caminho: string);
   /** Quantidade de linhas. */
   readonly linhas: number;
   /** Esquema em uma linha de texto, por exemplo "id:i64,preco:dinheiro". */
   readonly esquema: string;
   /** Nomes dos campos, na ordem do esquema. */
-  readonly campos: string[];
+  readonly campos: readonly string[];
+  /** Posição do campo; lança RangeError se o nome não existe. */
+  indice(campo: number | (keyof L & string)): number;
   /** A linha i em JSON estrito. */
   json(i: number): string;
   /** A linha i em jsonW-texto. */
   texto(i: number): string;
   /** A linha i como objeto. */
-  linha(i: number): Linha;
+  linha(i: number): L;
   /** Um campo da linha i, por nome ou posição. */
-  campo(i: number, campo: string | number): unknown;
+  campo<K extends keyof L & string>(i: number, campo: K): L[K];
+  campo(i: number, campo: number): Valor;
   /** Confere a custódia inteira (crc32c e SHA-256 ou BLAKE3 em cadeia). */
-  conferir(): boolean;
+  conferir(): true;
   /** Trava o que esta sessão vê: escopos como "pessoal financeiro tenant:42". Linha de outro tenant some na iteração. */
   visao(escopos: string): this;
-  /** Pedido de nota (pesos, cosseno, esparso ou grade) em JSON; devolve o JSON das k melhores. */
-  avaliarJson(pedido: string | object, k?: number): string;
+  /** Pedido de nota; devolve o JSON das k melhores. */
+  avaliarJson(pedido: Pedido, k?: number): string;
   /** Pedido de nota; devolve as k melhores. */
-  avaliar(pedido: string | object, k?: number): Nota[];
-  /** Monta o índice do campo neste leitor (1.3.13): a busca por chave deixa de varrer o arquivo. */
-  indexar(campo: string | number): this;
+  avaliar(pedido: Pedido, k?: number): Nota[];
+  /** Monta o índice do campo neste leitor: a busca por chave deixa de varrer o arquivo. */
+  indexar(campo: number | (keyof L & string)): this;
   /** true quando o campo tem índice neste leitor. */
-  temIndice(campo: string | number): boolean;
-  /** As linhas em que o campo vale o valor, em ordem (com índice, sem varrer). */
-  chave(campo: string | number, valor: unknown): number[];
-  [Symbol.iterator](): Iterator<Linha>;
+  temIndice(campo: number | (keyof L & string)): boolean;
+  /** As linhas em que o campo vale o valor, em ordem crescente. */
+  chave<K extends keyof L & string>(campo: K, valor: L[K]): number[];
+  chave(campo: number, valor: Valor): number[];
+  [Symbol.iterator](): Iterator<L>;
   fechar(): void;
+  [Symbol.dispose](): void;
 }
 
-export interface OpcoesEscritor {
-  /** 0 nenhuma, 1 rápida (padrão), 2 máxima. */
-  compressao?: 0 | 1 | 2;
-  /** 0 SHA-256 (padrão), 1 BLAKE3. */
-  hash?: 0 | 1;
-  /** Tamanho do bloco em KB (0 = padrão). */
-  blocoKb?: number;
-}
-
-/** Grava um arquivo .jsw; ele só aparece completo, em troca atômica, no fechar(). */
-export class Escritor {
+/**
+ * Grava um arquivo .jsw; ele só aparece completo, em troca atômica, no `fechar()`.
+ * Saindo de um bloco `using` sem `fechar()`, abandona: o destino fica como estava.
+ */
+export declare class Escritor<L extends Linha = Linha> implements Disposable {
   constructor(caminho: string, esquema: string, opcoes?: OpcoesEscritor);
   /** Grava um objeto (convertido para JSON). */
-  gravar(obj: Linha): void;
+  gravar(obj: L): void;
   /** Grava uma linha já em texto JSON ou jsonW-texto. */
   gravarTexto(texto: string): void;
   /** Fecha o bloco atual em disco. */
@@ -63,21 +102,17 @@ export class Escritor {
   fechar(): void;
   /** Desiste: fecha sem publicar; o destino fica como estava. */
   abandonar(): void;
+  [Symbol.dispose](): void;
 }
 
-export interface TermoReconhecido { termo: string; ini: number; fim: number; texto: string; sinal: string; peso: number }
-export interface SinalReconhecido { sinal: string; soma: number; vezes: number }
-
 /** Reconhece os termos de uma tabela (termo:texto,forma:dic,sinal:dic,peso:f32,idioma:dic,origem:dic) num texto. */
-export class Reconhecedor {
+export declare class Reconhecedor implements Disposable {
   constructor(caminho: string);
   reconhecerJson(texto: string): string;
   reconhecer(texto: string): { termos: TermoReconhecido[]; sinais: SinalReconhecido[] };
   fechar(): void;
+  [Symbol.dispose](): void;
 }
 
-/** Posições das k maiores notas (maior primeiro; empate pela menor posição). */
-export function escolher(notas: number[] | Float64Array, k: number): number[];
-
-/** Versão da biblioteca. */
-export const versao: string;
+/** Posições das k maiores notas (maior primeiro; empate pela menor posição; NaN é a pior). */
+export declare function escolher(notas: readonly number[] | Float64Array, k: number): number[];

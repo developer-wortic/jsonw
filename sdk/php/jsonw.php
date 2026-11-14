@@ -1,118 +1,424 @@
 <?php
-/* jsonW (json Wondrous) para PHP 8+, por cima da ABI C (libjsonw) com a extensao FFI. Sem dependencia.
- *   $a = new JsonW\Leitor("dados.jsw"); foreach ($a as $linha) { ... }   // cada linha como array (JSON)
+/* jsonW para PHP 8.4+ pela extensão FFI, por cima da ABI C (libjsonw). Sem dependência.
+ *   foreach (new JsonW\Leitor("dados.jsw") as $linha) { ... }
  *   $w = new JsonW\Escritor("novo.jsw", "id:i64,nome:texto"); $w->gravar(["id" => 1, "nome" => "x"]); $w->fechar(); */
+declare(strict_types=1);
+
 namespace JsonW;
 
-final class Lib {
+final class Erro extends \RuntimeException {}
+
+/** Linha de outro tenant depois de visao() (-3 na ABI). */
+final class LinhaOculta extends \RuntimeException {}
+
+final class Lib
+{
+    private const int ERRO = 320;
+
+    private const string CDEF = <<<'C'
+        const char *jsonw_versao(void);
+        void *jsonw_abrir(const char *caminho, char *erro, size_t nerro);
+        void jsonw_fechar(void *a);
+        uint64_t jsonw_linhas(const void *a);
+        int jsonw_campos(const void *a);
+        const char *jsonw_esquema(const void *a);
+        const char *jsonw_campo_nome(const void *a, int campo);
+        int64_t jsonw_linha_json(void *a, uint64_t linha, char *saida, size_t cap);
+        int64_t jsonw_linha_texto(void *a, uint64_t linha, char *saida, size_t cap);
+        int64_t jsonw_campo_json(void *a, uint64_t linha, int campo, char *saida, size_t cap);
+        int jsonw_conferir(void *a, char *erro, size_t nerro);
+        int jsonw_visao(void *a, const char *escopos, char *erro, size_t nerro);
+        int jsonw_indexar(void *a, int campo);
+        int jsonw_tem_indice(const void *a, int campo);
+        int64_t jsonw_chave(void *a, int campo, const char *valor, size_t n, uint64_t *linhas, size_t max);
+        void *jsonw_criar(const char *caminho, const char *esquema, char *erro, size_t nerro);
+        int jsonw_opcoes(void *w, int nivel, int hash, int bloco_kb);
+        int jsonw_gravar_json(void *w, const char *json, size_t n, char *erro, size_t nerro);
+        int jsonw_descarregar(void *w);
+        int jsonw_fechar_escritor(void *w);
+        int jsonw_abandonar(void *w);
+        int64_t jsonw_avaliar(void *a, const char *pedido, size_t n, size_t k, char *saida, size_t cap, char *erro, size_t nerro);
+        int64_t jsonw_escolher(const double *notas, size_t n, size_t k, uint64_t *linhas);
+        void *jsonw_reconhecedor(const char *termos, char *erro, size_t nerro);
+        void jsonw_reconhecedor_fechar(void *r);
+        int64_t jsonw_reconhecer(void *r, const char *texto, size_t n, char *saida, size_t cap);
+        C;
+
     private static ?\FFI $ffi = null;
-    public static function ffi(): \FFI {
-        if (self::$ffi) return self::$ffi;
-        $cdef = "const char *jsonw_versao(void);
-            void *jsonw_abrir(const char *caminho, char *erro, size_t nerro); void jsonw_fechar(void *a);
-            uint64_t jsonw_linhas(const void *a); int jsonw_campos(const void *a); const char *jsonw_esquema(const void *a);
-            const char *jsonw_campo_nome(const void *a, int campo);
-            int64_t jsonw_linha_json(void *a, uint64_t linha, char *saida, size_t cap); int64_t jsonw_linha_texto(void *a, uint64_t linha, char *saida, size_t cap);
-            int64_t jsonw_campo_json(void *a, uint64_t linha, int campo, char *saida, size_t cap); int jsonw_conferir(void *a, char *erro, size_t nerro);
-            int jsonw_indexar(void *a, int campo); int jsonw_tem_indice(const void *a, int campo); int64_t jsonw_chave(void *a, int campo, const char *valor, size_t n, uint64_t *linhas, size_t max);
-            void *jsonw_criar(const char *caminho, const char *esquema, char *erro, size_t nerro); int jsonw_opcoes(void *w, int nivel, int hash, int bloco_kb);
-            int jsonw_gravar_json(void *w, const char *json, size_t n, char *erro, size_t nerro); int jsonw_descarregar(void *w); int jsonw_fechar_escritor(void *w); int jsonw_abandonar(void *w);
-            int64_t jsonw_avaliar(void *a, const char *pedido, size_t n, size_t k, char *saida, size_t cap, char *erro, size_t nerro); int64_t jsonw_escolher(const double *notas, size_t n, size_t k, uint64_t *linhas);
-            void *jsonw_reconhecedor(const char *termos, char *erro, size_t nerro); void jsonw_reconhecedor_fechar(void *r); int64_t jsonw_reconhecer(void *r, const char *texto, size_t n, char *saida, size_t cap); int jsonw_visao(void *a, const char *escopos, char *erro, size_t nerro);";
-        /* a biblioteca: JSONW_LIB (caminho inteiro), ao lado deste arquivo, na pasta sdk ou em bin/<plataforma> do pacote */
-        $win = PHP_OS_FAMILY === "Windows"; $maq = strtolower(php_uname("m")); $maq = ["aarch64" => "arm64", "amd64" => "x86_64"][$maq] ?? $maq;
-        $plat = ($win ? "windows" : (PHP_OS_FAMILY === "Darwin" ? "macos" : "linux")) . "-" . $maq;
-        $nomes = $win ? ["libjsonw.dll"] : ["libjsonw.dylib", "libjsonw.so"]; $cams = [];
-        if (getenv("JSONW_LIB")) $cams[] = getenv("JSONW_LIB");
-        foreach ([__DIR__, __DIR__ . "/..", __DIR__ . "/../..", __DIR__ . "/../../bin/" . $plat] as $pasta) foreach ($nomes as $n) $cams[] = $pasta . "/" . $n;
-        foreach ($nomes as $n) $cams[] = $n;
-        $motivo = "";
-        foreach ($cams as $cam) {
-            if (str_contains($cam, "/") && !file_exists($cam)) continue;
-            try { self::$ffi = \FFI::cdef($cdef, $cam); return self::$ffi; } catch (\Throwable $e) { if ($motivo === "") $motivo = " (" . $cam . ": " . $e->getMessage() . ")"; }
+
+    public static function ffi(): \FFI
+    {
+        return self::$ffi ??= self::carregar();
+    }
+
+    /** A biblioteca: JSONW_LIB, ao lado deste arquivo, na pasta sdk, em bin/<plataforma> do pacote ou no caminho do sistema. */
+    private static function carregar(): \FFI
+    {
+        $win = PHP_OS_FAMILY === 'Windows';
+        $maq = strtolower(php_uname('m'));
+        $maq = match ($maq) { 'aarch64' => 'arm64', 'amd64' => 'x86_64', default => $maq };
+        $plat = match (PHP_OS_FAMILY) { 'Windows' => 'windows', 'Darwin' => 'macos', default => 'linux' } . "-$maq";
+        $nomes = $win ? ['libjsonw.dll'] : ['libjsonw.dylib', 'libjsonw.so'];
+
+        $caminhos = array_filter([getenv('JSONW_LIB') ?: null]);
+        foreach ([__DIR__, __DIR__ . '/..', __DIR__ . '/../..', __DIR__ . "/../../bin/$plat"] as $pasta) {
+            foreach ($nomes as $n) {
+                $caminhos[] = "$pasta/$n";
+            }
         }
-        throw new \RuntimeException("libjsonw nao encontrada para $plat$motivo: aponte JSONW_LIB para a biblioteca (bin/<plataforma>/ do pacote) ou copie-a para a pasta sdk");
+        array_push($caminhos, ...$nomes);
+
+        $motivo = '';
+        foreach ($caminhos as $cam) {
+            if (str_contains($cam, '/') && !is_file($cam)) {
+                continue;
+            }
+            try {
+                return \FFI::cdef(self::CDEF, $cam);
+            } catch (\FFI\Exception $e) {
+                $motivo = $motivo ?: " ($cam: {$e->getMessage()})";
+            }
+        }
+        throw new Erro("libjsonw nao encontrada para $plat$motivo: aponte JSONW_LIB para a biblioteca");
     }
-    public static function texto(callable $fn): string {   /* chama fn(saida, cap) ate caber */
-        $cap = 1 << 16;
-        for (;;) {
-            $b = self::ffi()->new("char[$cap]"); $n = $fn($b, $cap);
-            if ($n == -2) { $cap *= 4; continue; }
-            if ($n == -3) throw new LinhaOculta("linha oculta pela visao");
-            if ($n < 0) throw new \RuntimeException("linha ou campo ilegivel");
-            return \FFI::string($b, $n);
+
+    /** Buffer que cresce até caber (-2 = curto). */
+    public static function texto(\Closure $chamada): string
+    {
+        for ($cap = 1 << 16; ; $cap *= 4) {
+            $b = self::ffi()->new("char[$cap]");
+            $n = $chamada($b, $cap);
+            if ($n >= 0) {
+                return \FFI::string($b, $n);
+            }
+            match ($n) {
+                -2 => null,
+                -3 => throw new LinhaOculta('linha oculta pela visao'),
+                default => throw new Erro('linha ou campo ilegivel'),
+            };
         }
     }
-}
 
-final class LinhaOculta extends \RuntimeException {}   /* linha de outro tenant depois de visao() (-3 na ABI) */
-final class Leitor implements \IteratorAggregate, \Countable {
-    private $a; public int $linhas; public string $esquema; public array $campos = [];
-    public function __construct(string $caminho) {
-        $f = Lib::ffi(); $e = Lib::ffi()->new("char[200]");
-        $this->a = $f->jsonw_abrir($caminho, $e, 200);
-        if ($this->a === null) throw new \RuntimeException(\FFI::string($e));
-        $this->linhas = (int)$f->jsonw_linhas($this->a); $this->esquema = $f->jsonw_esquema($this->a);
-        for ($i = 0; $i < $f->jsonw_campos($this->a); $i++) $this->campos[] = $f->jsonw_campo_nome($this->a, $i);
+    /** Os n primeiros valores de um array C, como lista PHP. */
+    public static function lista(\FFI\CData $c, int $n): array
+    {
+        $r = [];
+        for ($i = 0; $i < $n; $i++) {
+            $r[] = $c[$i];
+        }
+        return $r;
     }
-    public function __destruct() { $this->fechar(); }
-    public function fechar(): void { if ($this->a !== null) { Lib::ffi()->jsonw_fechar($this->a); $this->a = null; } }
-    public function json(int $i): string { $f = Lib::ffi(); $a = $this->a; return Lib::texto(fn($b, $c) => $f->jsonw_linha_json($a, $i, $b, $c)); }
-    public function texto(int $i): string { $f = Lib::ffi(); $a = $this->a; return Lib::texto(fn($b, $c) => $f->jsonw_linha_texto($a, $i, $b, $c)); }
-    public function linha(int $i): array { return json_decode($this->json($i), true, 512, JSON_THROW_ON_ERROR); }
-    public function campo(int $i, int|string $campo): mixed { $k = is_int($campo) ? $campo : array_search($campo, $this->campos, true); $f = Lib::ffi(); $a = $this->a; return json_decode(Lib::texto(fn($b, $c) => $f->jsonw_campo_json($a, $i, $k, $b, $c)), true); }
-    public function conferir(): bool { $e = Lib::ffi()->new("char[200]"); if (Lib::ffi()->jsonw_conferir($this->a, $e, 200)) throw new \RuntimeException(\FFI::string($e)); return true; }
-    /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo vale o valor (valor em PHP: 2, "RJ"), em ordem; com indexar(), sem varrer */
-    public function indexar(int|string $campo): static { if (Lib::ffi()->jsonw_indexar($this->a, $this->k($campo))) throw new \RuntimeException("campo sem indice"); return $this; }
-    public function temIndice(int|string $campo): bool { return Lib::ffi()->jsonw_tem_indice($this->a, $this->k($campo)) === 1; }
-    public function chave(int|string $campo, mixed $valor): array {
-        $f = Lib::ffi(); $k = $this->k($campo); $v = json_encode($valor, JSON_UNESCAPED_UNICODE); $cap = 16;
-        for (;;) { $out = $f->new("uint64_t[$cap]"); $n = $f->jsonw_chave($this->a, $k, $v, strlen($v), $out, $cap); if ($n === -2) throw new \RuntimeException("valor nao e do tipo do campo"); if ($n < 0) throw new \RuntimeException("campo invalido"); if ($n <= $cap) { $r = []; for ($i = 0; $i < $n; $i++) $r[] = $out[$i]; return $r; } $cap = $n; }
+
+    /** Chama com um buffer de erro; código diferente de 0 vira Erro com o texto da biblioteca. */
+    public static function exigir(\Closure $chamada): void
+    {
+        $e = self::ffi()->new('char[' . self::ERRO . ']');
+        if ($chamada($e, self::ERRO) !== 0) {
+            throw new Erro(\FFI::string($e));
+        }
     }
-    private function k(int|string $campo): int { return is_int($campo) ? $campo : (array_search($campo, $this->campos, true) === false ? -1 : array_search($campo, $this->campos, true)); }
-    public function visao(string $escopos): static { $f = Lib::ffi(); $e = $f->new("char[300]"); if ($f->jsonw_visao($this->a, $escopos, $e, 300)) throw new \RuntimeException(\FFI::string($e)); $this->esquema = $f->jsonw_esquema($this->a); $this->campos = []; for ($i = 0; $i < $f->jsonw_campos($this->a); $i++) $this->campos[] = $f->jsonw_campo_nome($this->a, $i); return $this; }   /* trava o que a sessao ve */
-    public function avaliarJson(string|array $pedido, int $k = 10): string {   /* AVALIAR + ESCOLHER: as k melhores, [{"linha","nota"}] */
-        $p = is_string($pedido) ? $pedido : json_encode($pedido, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR); $f = Lib::ffi(); $a = $this->a; $e = $f->new("char[300]");
-        return Lib::texto(function ($b, $c) use ($f, $a, $p, $k, $e) { $n = $f->jsonw_avaliar($a, $p, strlen($p), $k, $b, $c, $e, 300); if ($n == -1) throw new \RuntimeException(\FFI::string($e)); return $n; });
+
+    /** Abre um handle; null vira Erro com o texto da biblioteca. */
+    public static function abrir(\Closure $chamada): \FFI\CData
+    {
+        $e = self::ffi()->new('char[' . self::ERRO . ']');
+        return $chamada($e, self::ERRO) ?? throw new Erro(\FFI::string($e));
     }
-    public function avaliar(string|array $pedido, int $k = 10): array { return json_decode($this->avaliarJson($pedido, $k), true, 512, JSON_THROW_ON_ERROR); }
-    public function getIterator(): \Generator { for ($i = 0; $i < $this->linhas; $i++) { try { $l = $this->linha($i); } catch (LinhaOculta) { continue; } yield $l; } }
-    public function count(): int { return $this->linhas; }
+
+    public static function json(mixed $valor): string
+    {
+        return json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+    }
+
+    public static function decodificar(string $json): mixed
+    {
+        return json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+    }
 }
 
-function escolher(array $notas, int $k): array {   /* posicoes das k maiores notas (maior primeiro; empate pela menor posicao) */
-    $f = Lib::ffi(); $n = count($notas); $v = $f->new("double[" . max($n, 1) . "]"); foreach (array_values($notas) as $i => $x) $v[$i] = (float)$x;
-    $out = $f->new("uint64_t[" . max($k, 1) . "]"); $m = $f->jsonw_escolher($v, $n, $k, $out); $r = []; for ($i = 0; $i < $m; $i++) $r[] = (int)$out[$i]; return $r;
+function versao(): string
+{
+    return Lib::ffi()->jsonw_versao();
 }
 
-final class Reconhecedor {   /* tabela de termos (termo:texto,forma:dic,sinal:dic,peso:f32,idioma:dic,origem:dic) -> reconhecedor */
-    private $r;
-    public function __construct(string $termosJsw) { $f = Lib::ffi(); $e = $f->new("char[300]"); $this->r = $f->jsonw_reconhecedor($termosJsw, $e, 300); if ($this->r === null) throw new \RuntimeException(\FFI::string($e)); }
-    public function __destruct() { $this->fechar(); }
-    public function fechar(): void { if ($this->r !== null) { Lib::ffi()->jsonw_reconhecedor_fechar($this->r); $this->r = null; } }
-    public function reconhecerJson(string $texto): string { $f = Lib::ffi(); $r = $this->r; return Lib::texto(fn($b, $c) => $f->jsonw_reconhecer($r, $texto, strlen($texto), $b, $c)); }
-    public function reconhecer(string $texto): array { return json_decode($this->reconhecerJson($texto), true, 512, JSON_THROW_ON_ERROR); }   /* {termos: [...], sinais: [...]} */
+/** As posições das k maiores notas (maior primeiro; empate pela menor posição; NaN é a pior). */
+function escolher(array $notas, int $k): array
+{
+    $f = Lib::ffi();
+    $notas = array_values($notas);
+    $n = count($notas);
+    $v = $f->new('double[' . max($n, 1) . ']');
+    foreach ($notas as $i => $x) {
+        $v[$i] = (float) $x;
+    }
+    $out = $f->new('uint64_t[' . max($k, 1) . ']');
+    return Lib::lista($out, max($f->jsonw_escolher($v, $n, $k, $out), 0));
 }
 
-final class Escritor {
-    private $w;
-    public function __construct(string $caminho, string $esquema, int $compressao = 1, int $hash = 0, int $blocoKb = 0) {
-        $f = Lib::ffi(); $e = Lib::ffi()->new("char[200]");
-        $this->w = $f->jsonw_criar($caminho, $esquema, $e, 200);
-        if ($this->w === null) throw new \RuntimeException(\FFI::string($e));
+/** @implements \IteratorAggregate<int, array> */
+final class Leitor implements \IteratorAggregate, \Countable
+{
+    private ?\FFI\CData $a;
+    public readonly int $linhas;
+    public private(set) string $esquema = '';
+    /** @var list<string> */
+    public private(set) array $campos = [];
+
+    public function __construct(string $caminho)
+    {
+        $f = Lib::ffi();
+        $this->a = Lib::abrir(static fn($e, $n) => $f->jsonw_abrir($caminho, $e, $n));
+        $this->linhas = $f->jsonw_linhas($this->a);
+        $this->lerEsquema();
+    }
+
+    public function __destruct()
+    {
+        $this->fechar();
+    }
+
+    public function fechar(): void
+    {
+        if ($this->a !== null) {
+            Lib::ffi()->jsonw_fechar($this->a);
+            $this->a = null;
+        }
+    }
+
+    private function lerEsquema(): void
+    {
+        $f = Lib::ffi();
+        $this->esquema = $f->jsonw_esquema($this->a);
+        $campos = [];
+        for ($i = 0, $n = $f->jsonw_campos($this->a); $i < $n; $i++) {
+            $campos[] = $f->jsonw_campo_nome($this->a, $i);
+        }
+        $this->campos = $campos;
+    }
+
+    public function json(int $i): string
+    {
+        return Lib::texto(fn($b, $c) => Lib::ffi()->jsonw_linha_json($this->a, $i, $b, $c));
+    }
+
+    public function texto(int $i): string
+    {
+        return Lib::texto(fn($b, $c) => Lib::ffi()->jsonw_linha_texto($this->a, $i, $b, $c));
+    }
+
+    public function linha(int $i): array
+    {
+        return Lib::decodificar($this->json($i));
+    }
+
+    public function campo(int $i, int|string $campo): mixed
+    {
+        $k = $this->indice($campo);
+        return Lib::decodificar(Lib::texto(fn($b, $c) => Lib::ffi()->jsonw_campo_json($this->a, $i, $k, $b, $c)));
+    }
+
+    public function indice(int|string $campo): int
+    {
+        if (is_int($campo)) {
+            return $campo;
+        }
+        $k = array_search($campo, $this->campos, true);
+        return $k === false ? throw new Erro("campo inexistente: $campo") : $k;
+    }
+
+    public function conferir(): true
+    {
+        Lib::exigir(fn($e, $n) => Lib::ffi()->jsonw_conferir($this->a, $e, $n));
+        return true;
+    }
+
+    /** Trava o que a sessão vê ("pessoal vendas tenant:42"); linha de outro tenant = LinhaOculta. */
+    public function visao(string $escopos): static
+    {
+        Lib::exigir(fn($e, $n) => Lib::ffi()->jsonw_visao($this->a, $escopos, $e, $n));
+        $this->lerEsquema();
+        return $this;
+    }
+
+    public function indexar(int|string $campo): static
+    {
+        if (Lib::ffi()->jsonw_indexar($this->a, $this->indice($campo)) !== 0) {
+            throw new Erro('campo sem indice');
+        }
+        return $this;
+    }
+
+    public function temIndice(int|string $campo): bool
+    {
+        return Lib::ffi()->jsonw_tem_indice($this->a, $this->indice($campo)) === 1;
+    }
+
+    /** As linhas em que o campo vale $valor (2, "RJ", null), em ordem crescente. */
+    public function chave(int|string $campo, mixed $valor): array
+    {
+        $f = Lib::ffi();
+        $k = $this->indice($campo);
+        $v = Lib::json($valor);
+        for ($cap = 16; ;) {
+            $out = $f->new("uint64_t[$cap]");
+            $n = $f->jsonw_chave($this->a, $k, $v, strlen($v), $out, $cap);
+            if ($n === -2) {
+                throw new Erro('valor nao e do tipo do campo');
+            }
+            if ($n < 0) {
+                throw new Erro('campo invalido');
+            }
+            if ($n <= $cap) {
+                return Lib::lista($out, $n);
+            }
+            $cap = $n;
+        }
+    }
+
+    /** As k melhores linhas pelo pedido, como a ABI devolve: [{"linha","nota"}]. */
+    public function avaliarJson(string|array $pedido, int $k = 10): string
+    {
+        $p = is_string($pedido) ? $pedido : Lib::json($pedido);
+        $f = Lib::ffi();
+        $e = $f->new('char[320]');
+        return Lib::texto(function ($b, $c) use ($f, $p, $k, $e): int {
+            $n = $f->jsonw_avaliar($this->a, $p, strlen($p), $k, $b, $c, $e, 320);
+            return $n === -1 ? throw new Erro(\FFI::string($e)) : $n;
+        });
+    }
+
+    public function avaliar(string|array $pedido, int $k = 10): array
+    {
+        return Lib::decodificar($this->avaliarJson($pedido, $k));
+    }
+
+    /** Com visão, as linhas de outro tenant ficam de fora. */
+    public function getIterator(): \Generator
+    {
+        for ($i = 0; $i < $this->linhas; $i++) {
+            try {
+                $linha = $this->linha($i);
+            } catch (LinhaOculta) {
+                continue;
+            }
+            yield $i => $linha;
+        }
+    }
+
+    public function count(): int
+    {
+        return $this->linhas;
+    }
+}
+
+/** Tabela de termos (termo:texto,forma:dic,sinal:dic,peso:f32,idioma:dic,origem:dic) -> termos e sinais achados no texto. */
+final class Reconhecedor
+{
+    private ?\FFI\CData $r;
+
+    public function __construct(string $termosJsw)
+    {
+        $f = Lib::ffi();
+        $this->r = Lib::abrir(static fn($e, $n) => $f->jsonw_reconhecedor($termosJsw, $e, $n));
+    }
+
+    public function __destruct()
+    {
+        $this->fechar();
+    }
+
+    public function fechar(): void
+    {
+        if ($this->r !== null) {
+            Lib::ffi()->jsonw_reconhecedor_fechar($this->r);
+            $this->r = null;
+        }
+    }
+
+    public function reconhecerJson(string $texto): string
+    {
+        return Lib::texto(fn($b, $c) => Lib::ffi()->jsonw_reconhecer($this->r, $texto, strlen($texto), $b, $c));
+    }
+
+    public function reconhecer(string $texto): array
+    {
+        return Lib::decodificar($this->reconhecerJson($texto));
+    }
+}
+
+/** O destino só aparece no fechar(); abandonar() desiste e deixa o destino como estava. */
+final class Escritor
+{
+    private ?\FFI\CData $w;
+
+    public function __construct(string $caminho, string $esquema, int $compressao = 1, int $hash = 0, int $blocoKb = 0)
+    {
+        $f = Lib::ffi();
+        $this->w = Lib::abrir(static fn($e, $n) => $f->jsonw_criar($caminho, $esquema, $e, $n));
         $f->jsonw_opcoes($this->w, $compressao, $hash, $blocoKb);
     }
-    public function gravarTexto(string $texto): void { $e = Lib::ffi()->new("char[200]"); if (Lib::ffi()->jsonw_gravar_json($this->w, $texto, strlen($texto), $e, 200)) throw new \RuntimeException(\FFI::string($e)); }
-    public function gravar(array $obj): void { $this->gravarTexto(json_encode($obj, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR)); }
-    public function descarregar(): void { Lib::ffi()->jsonw_descarregar($this->w); }
-    public function fechar(): void { if ($this->w !== null) { $r = Lib::ffi()->jsonw_fechar_escritor($this->w); $this->w = null; if ($r) throw new \RuntimeException("nao gravou tudo"); } }
-    public function abandonar(): void { if ($this->w !== null) { Lib::ffi()->jsonw_abandonar($this->w); $this->w = null; } }   /* desiste: fecha sem publicar; o destino fica como estava */
-    public function __destruct() { $this->fechar(); }
+
+    public function __destruct()
+    {
+        $this->fechar();
+    }
+
+    public function gravarTexto(string $texto): void
+    {
+        Lib::exigir(fn($e, $n) => Lib::ffi()->jsonw_gravar_json($this->w, $texto, strlen($texto), $e, $n));
+    }
+
+    public function gravar(array $obj): void
+    {
+        $this->gravarTexto(Lib::json($obj));
+    }
+
+    public function descarregar(): void
+    {
+        Lib::ffi()->jsonw_descarregar($this->w);
+    }
+
+    public function fechar(): void
+    {
+        if ($this->w === null) {
+            return;
+        }
+        [$w, $this->w] = [$this->w, null];
+        if (Lib::ffi()->jsonw_fechar_escritor($w) !== 0) {
+            throw new Erro('nao gravou tudo');
+        }
+    }
+
+    public function abandonar(): void
+    {
+        if ($this->w !== null) {
+            [$w, $this->w] = [$this->w, null];
+            Lib::ffi()->jsonw_abandonar($w);
+        }
+    }
 }
 
-if (PHP_SAPI === "cli" && isset($argv) && realpath($argv[0]) === __FILE__ && isset($argv[1])) {   /* php jsonw.php arquivo.jsw -> JSONL; --avaliar arq pedido k; --reconhecer termos.jsw texto */
-    if ($argv[1] === "--avaliar") { $a = new Leitor($argv[2]); echo $a->avaliarJson($argv[3], (int)$argv[4]), "\n"; }
-    elseif ($argv[1] === "--visao") { $a = (new Leitor($argv[2]))->visao($argv[3]); echo implode(",", $a->campos), "\n"; for ($i = 0; $i < $a->linhas; $i++) { try { echo $a->json($i), "\n"; } catch (LinhaOculta) {} } echo $a->avaliarJson($argv[4], (int)$argv[5]), "\n"; }
-    elseif ($argv[1] === "--reconhecer") { $r = new Reconhecedor($argv[2]); echo $r->reconhecerJson($argv[3]), "\n"; }
-    else { $a = new Leitor($argv[1]); for ($i = 0; $i < $a->linhas; $i++) echo $a->json($i), "\n"; }
+/* php jsonw.php arq.jsw -> JSONL; --avaliar arq pedido k; --visao arq escopos pedido k; --reconhecer termos.jsw texto */
+if (PHP_SAPI === 'cli' && realpath($argv[0] ?? '') === __FILE__ && isset($argv[1])) {
+    match ($argv[1]) {
+        '--avaliar' => print (new Leitor($argv[2]))->avaliarJson($argv[3], (int) $argv[4]) . "\n",
+        '--reconhecer' => print (new Reconhecedor($argv[2]))->reconhecerJson($argv[3]) . "\n",
+        '--visao' => (static function (array $argv): void {
+            $a = (new Leitor($argv[2]))->visao($argv[3]);
+            echo implode(',', $a->campos), "\n";
+            for ($i = 0; $i < $a->linhas; $i++) {
+                try {
+                    echo $a->json($i), "\n";
+                } catch (LinhaOculta) {
+                }
+            }
+            echo $a->avaliarJson($argv[4], (int) $argv[5]), "\n";
+        })($argv),
+        default => (static function (string $arq): void {
+            $a = new Leitor($arq);
+            for ($i = 0; $i < $a->linhas; $i++) {
+                echo $a->json($i), "\n";
+            }
+        })($argv[1]),
+    };
 }

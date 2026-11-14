@@ -1,19 +1,55 @@
-// cargo run --example ler -- arquivo.jsw -> JSONL; -- --avaliar arq pedido k; -- --reconhecer termos.jsw texto
-fn main() {
-    let a: Vec<String> = std::env::args().collect();
-    if a.len() == 5 && a[1] == "--avaliar" {
-        let l = jsonw::Leitor::abrir(&a[2]).expect("abrir");
-        println!("{}", l.avaliar(&a[3], a[4].parse().expect("k")).unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1) }));
-    } else if a.len() == 6 && a[1] == "--visao" {   // --visao arq escopos pedido k: campos, as linhas visiveis (JSONL) e o avaliar
-        let mut l = jsonw::Leitor::abrir(&a[2]).expect("abrir"); l.visao(&a[3]).unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1) });
-        println!("{}", l.campos.join(","));
-        for i in 0..l.linhas { match l.json(i) { Ok(s) => println!("{}", s), Err(e) if e.oculta() => {}, Err(e) => { eprintln!("{}", e); std::process::exit(1) } } }
-        println!("{}", l.avaliar(&a[4], a[5].parse().expect("k")).unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1) }));
-    } else if a.len() == 4 && a[1] == "--reconhecer" {
-        let r = jsonw::Reconhecedor::abrir(&a[2]).unwrap_or_else(|e| { eprintln!("{}", e); std::process::exit(1) });
-        println!("{}", r.reconhecer(&a[3]).expect("reconhecer"));
-    } else {
-        let l = jsonw::Leitor::abrir(a.get(1).expect("uso: ler arquivo.jsw")).expect("abrir");
-        for i in 0..l.linhas { println!("{}", l.json(i).expect("linha")); }
+//! cargo run --example ler -- arq.jsw -> JSONL; -- --avaliar arq pedido k; -- --visao arq escopos pedido k;
+//! -- --reconhecer termos.jsw texto
+
+use std::process::ExitCode;
+
+use jsonw::{Erro, Leitor, Reconhecedor, Resultado};
+
+fn k(texto: &str) -> Resultado<usize> {
+    texto
+        .parse()
+        .map_err(|_| Erro::Biblioteca(format!("k invalido: {texto}")))
+}
+
+fn rodar(args: &[String]) -> Resultado<()> {
+    match args {
+        [_, op, arq, pedido, n] if op == "--avaliar" => {
+            println!("{}", Leitor::abrir(arq)?.avaliar(pedido, k(n)?)?);
+        }
+        [_, op, arq, escopos, pedido, n] if op == "--visao" => {
+            let mut a = Leitor::abrir(arq)?;
+            a.visao(escopos)?;
+            println!("{}", a.campos.join(","));
+            for i in 0..a.linhas {
+                match a.json(i) {
+                    Ok(linha) => println!("{linha}"),
+                    Err(Erro::LinhaOculta) => {}
+                    Err(e) => return Err(e),
+                }
+            }
+            println!("{}", a.avaliar(pedido, k(n)?)?);
+        }
+        [_, op, termos, texto] if op == "--reconhecer" => {
+            println!("{}", Reconhecedor::abrir(termos)?.reconhecer(texto)?);
+        }
+        [_, arq] => {
+            let a = Leitor::abrir(arq)?;
+            for i in 0..a.linhas {
+                println!("{}", a.json(i)?);
+            }
+        }
+        _ => return Err(Erro::Biblioteca("uso: ler arquivo.jsw".into())),
+    }
+    Ok(())
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().collect();
+    match rodar(&args) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::FAILURE
+        }
     }
 }

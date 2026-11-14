@@ -1,13 +1,33 @@
-//! exemplo: abre um .jsw e mostra as linhas em que <campo> vale <valor> (JSON), pelo indice (ou varrendo, com --varrer).
-//! cargo run --example exemplo -- dados.jsw id 2
-fn main() -> Result<(), jsonw::Erro> {
-    let args: Vec<String> = std::env::args().collect();
-    if args.len() < 4 { eprintln!("uso: exemplo arquivo.jsw campo valor [--varrer]"); std::process::exit(2); }
-    let mut a = jsonw::Leitor::abrir(&args[1])?;
-    let Some(k) = a.campos.iter().position(|c| c == &args[2]) else {
-        eprintln!("campo {} não existe", args[2]); std::process::exit(1);
-    };
-    if args.get(4).map(String::as_str) != Some("--varrer") { a.indexar(k)?; }
-    for i in a.chave(k, &args[3])? { println!("{}", a.json(i)?); }
+//! cargo run --example exemplo -- dados.jsw id 2: as linhas em que o campo vale o valor (JSON), pelo índice;
+//! --varrer no fim para buscar sem índice.
+
+use std::process::ExitCode;
+
+use jsonw::{Leitor, Resultado};
+
+fn rodar(arquivo: &str, campo: &str, valor: &str, varrer: bool) -> Resultado<()> {
+    let mut a = Leitor::abrir(arquivo)?;
+    let k = a.indice(campo)?;
+    if !varrer {
+        a.indexar(k)?;
+    }
+    for i in a.chave(k, valor)? {
+        println!("{}", a.json(i)?);
+    }
     Ok(())
+}
+
+fn main() -> ExitCode {
+    let args: Vec<String> = std::env::args().collect();
+    let [_, arquivo, campo, valor, resto @ ..] = args.as_slice() else {
+        eprintln!("uso: exemplo arquivo.jsw campo valor [--varrer]");
+        return ExitCode::from(2);
+    };
+    match rodar(arquivo, campo, valor, resto.first().is_some_and(|m| m == "--varrer")) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(e) => {
+            eprintln!("{e}");
+            ExitCode::FAILURE
+        }
+    }
 }

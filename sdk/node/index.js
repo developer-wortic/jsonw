@@ -1,52 +1,201 @@
-/* jsonW (json Wondrous) para Node.js: Leitor e Escritor por cima do addon N-API (jsonw.node, compilado por `make node`).
- *   const jsonw = require("jsonw"); const a = new jsonw.Leitor("dados.jsw"); for (const linha of a) { ... } a.fechar();
- *   const w = new jsonw.Escritor("novo.jsw", "id:i64,nome:texto"); w.gravar({id: 1, nome: "x"}); w.fechar(); */
-"use strict";
-const path = require("path");
-let nat;
-const plataforma = `${process.platform}-${process.arch}`;   /* o pacote do npm traz prebuilt/<plataforma>/jsonw.node */
-for (const c of [path.join(__dirname, "prebuilt", plataforma, "jsonw.node"), path.join(__dirname, "jsonw.node"), path.join(__dirname, "..", "jsonw.node")]) { try { nat = require(c); break; } catch (e) { if (e.code !== "MODULE_NOT_FOUND") throw e; } }
-if (!nat) throw new Error(`jsonw: sem addon para ${plataforma} (ha para darwin-arm64 e linux-x64; no Windows, use o WSL ou compile com \`make node\` na pasta sdk)`);
+// jsonW para Node.js 22+: Leitor e Escritor por cima do addon N-API (jsonw.node).
+//   using a = new Leitor("dados.jsw"); for (const linha of a) { ... }
+//   using w = new Escritor("novo.jsw", "id:i64,nome:texto"); w.gravar({ id: 1, nome: "x" }); w.fechar();
+// `using` é do Node 24+; no Node 22, chame fechar() no fim.
+import { createRequire } from "node:module";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-class Leitor {
-  constructor(caminho) { this._a = nat.abrir(caminho); this.linhas = nat.linhas(this._a); this.esquema = nat.esquema(this._a); this.campos = nat.campos(this._a); }
-  json(i) { return nat.linhaJson(this._a, i); }
-  texto(i) { return nat.linhaTexto(this._a, i); }
+const require = createRequire(import.meta.url);
+const plataforma = `${process.platform}-${process.arch}`;
+
+const nat = (() => {
+  const dir = import.meta.dirname;
+  for (const c of [join(dir, "prebuilt", plataforma, "jsonw.node"), join(dir, "jsonw.node"), join(dir, "..", "jsonw.node")]) {
+    try {
+      return require(c);
+    } catch (e) {
+      if (e.code !== "MODULE_NOT_FOUND") throw e;
+    }
+  }
+  throw new Error(`jsonw: sem addon para ${plataforma}; compile com \`make node\` na pasta sdk`);
+})();
+
+export const versao = nat.versao();
+
+/** Linha de outro tenant depois de visao(). */
+export const ehOculta = (e) => e?.code === "OCULTA";
+
+export class Leitor {
+  #a;
+  linhas;
+  esquema = "";
+  campos = [];
+
+  constructor(caminho) {
+    this.#a = nat.abrir(caminho);
+    this.linhas = nat.linhas(this.#a);
+    this.#lerEsquema();
+  }
+
+  #lerEsquema() {
+    this.esquema = nat.esquema(this.#a);
+    this.campos = nat.campos(this.#a);
+  }
+
+  indice(campo) {
+    if (typeof campo === "number") return campo;
+    const k = this.campos.indexOf(campo);
+    if (k < 0) throw new RangeError(`jsonw: campo inexistente: ${campo}`);
+    return k;
+  }
+
+  json(i) { return nat.linhaJson(this.#a, i); }
+  texto(i) { return nat.linhaTexto(this.#a, i); }
   linha(i) { return JSON.parse(this.json(i)); }
-  campo(i, campo) { const k = typeof campo === "number" ? campo : this.campos.indexOf(campo); return JSON.parse(nat.campoJson(this._a, i, k)); }
-  conferir() { return nat.conferir(this._a); }
-  /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo vale o valor (valor em JS: 7, "RJ"), em ordem; com indexar(campo), sem varrer */
-  _k(campo) { return typeof campo === "number" ? campo : this.campos.indexOf(campo); }
-  indexar(campo) { nat.indexar(this._a, this._k(campo)); return this; }
-  temIndice(campo) { return nat.temIndice(this._a, this._k(campo)); }
-  chave(campo, valor) { return nat.chave(this._a, this._k(campo), JSON.stringify(valor)); }
-  visao(escopos) { nat.visao(this._a, escopos); this.esquema = nat.esquema(this._a); this.campos = nat.campos(this._a); return this; }   /* trava o que a sessao ve; linha de outro tenant: erro com code OCULTA */
-  avaliarJson(pedido, k = 10) { return nat.avaliar(this._a, typeof pedido === "string" ? pedido : JSON.stringify(pedido), k); }
-  avaliar(pedido, k = 10) { return JSON.parse(this.avaliarJson(pedido, k)); }   /* as k melhores: [{linha, nota}], da maior nota para a menor */
-  *[Symbol.iterator]() { for (let i = 0; i < this.linhas; i++) { let l; try { l = this.linha(i); } catch (e) { if (e.code === "OCULTA") continue; throw e; } yield l; } }
-  fechar() { if (this._a) { nat.fechar(this._a); this._a = null; } }
-}
-class Reconhecedor {   /* tabela de termos (termo:texto,forma:dic,sinal:dic,peso:f32,idioma:dic,origem:dic) -> reconhecedor */
-  constructor(caminho) { this._r = nat.reconhecedor(caminho); }
-  reconhecerJson(texto) { return nat.reconhecer(this._r, texto); }
-  reconhecer(texto) { return JSON.parse(this.reconhecerJson(texto)); }   /* {termos: [{termo, ini, fim, texto, sinal, peso}], sinais: [{sinal, soma, vezes}]} */
-  fechar() { if (this._r) { nat.reconhecedorFechar(this._r); this._r = null; } }
-}
-const escolher = (notas, k) => nat.escolher(notas, k);   /* posicoes das k maiores notas (maior primeiro; empate pela menor posicao) */
-class Escritor {
-  constructor(caminho, esquema, opcoes = {}) { this._w = nat.criar(caminho, esquema, opcoes.compressao ?? 1, opcoes.hash ?? 0, opcoes.blocoKb ?? 0); }
-  gravarTexto(t) { nat.gravar(this._w, t); }
-  gravar(obj) { nat.gravar(this._w, JSON.stringify(obj)); }
-  descarregar() { nat.descarregar(this._w); }
-  fechar() { if (this._w) { nat.fecharEscritor(this._w); this._w = null; } }
-  abandonar() { if (this._w) { nat.abandonar(this._w); this._w = null; } }   /* desiste: fecha sem publicar; o destino fica como estava */
-}
-module.exports = { Leitor, Escritor, Reconhecedor, escolher, versao: nat.versao() };
+  campo(i, campo) { return JSON.parse(nat.campoJson(this.#a, i, this.indice(campo))); }
+  conferir() { return nat.conferir(this.#a); }
 
-if (require.main === module && process.argv[2]) {   /* node index.js arquivo.jsw -> JSONL; --avaliar arq pedido k; --reconhecer termos.jsw texto */
-  const [m, x, y, z] = process.argv.slice(2);
-  if (m === "--visao") { const a = new Leitor(x).visao(y); const [p, k] = process.argv.slice(5); process.stdout.write(a.campos.join(",") + "\n"); for (let i = 0; i < a.linhas; i++) { try { process.stdout.write(a.json(i) + "\n"); } catch (e) { if (e.code !== "OCULTA") throw e; } } process.stdout.write(a.avaliarJson(p, Number(k)) + "\n"); a.fechar(); }
-  else   if (m === "--avaliar") { const a = new Leitor(x); process.stdout.write(a.avaliarJson(y, Number(z)) + "\n"); a.fechar(); }
-  else if (m === "--reconhecer") { const r = new Reconhecedor(x); process.stdout.write(r.reconhecerJson(y) + "\n"); r.fechar(); }
-  else { const a = new Leitor(m); for (let i = 0; i < a.linhas; i++) process.stdout.write(a.json(i) + "\n"); a.fechar(); }
+  indexar(campo) {
+    nat.indexar(this.#a, this.indice(campo));
+    return this;
+  }
+
+  temIndice(campo) { return nat.temIndice(this.#a, this.indice(campo)); }
+
+  /** As linhas em que o campo vale `valor` (7, "RJ", null), em ordem crescente. */
+  chave(campo, valor) { return nat.chave(this.#a, this.indice(campo), JSON.stringify(valor)); }
+
+  /** Trava o que a sessão vê ("pessoal vendas tenant:42"); linha de outro tenant lança erro com code "OCULTA". */
+  visao(escopos) {
+    nat.visao(this.#a, escopos);
+    this.#lerEsquema();
+    return this;
+  }
+
+  avaliarJson(pedido, k = 10) {
+    return nat.avaliar(this.#a, typeof pedido === "string" ? pedido : JSON.stringify(pedido), k);
+  }
+
+  /** As k melhores linhas: [{ linha, nota }], da maior nota para a menor. */
+  avaliar(pedido, k = 10) { return JSON.parse(this.avaliarJson(pedido, k)); }
+
+  /** Com visão, as linhas de outro tenant ficam de fora. */
+  *[Symbol.iterator]() {
+    for (let i = 0; i < this.linhas; i++) {
+      try {
+        yield this.linha(i);
+      } catch (e) {
+        if (!ehOculta(e)) throw e;
+      }
+    }
+  }
+
+  fechar() {
+    if (this.#a) {
+      nat.fechar(this.#a);
+      this.#a = null;
+    }
+  }
+
+  [Symbol.dispose]() { this.fechar(); }
+}
+
+/** Tabela de termos (termo:texto,forma:dic,sinal:dic,peso:f32,idioma:dic,origem:dic) -> termos e sinais achados no texto. */
+export class Reconhecedor {
+  #r;
+
+  constructor(caminho) { this.#r = nat.reconhecedor(caminho); }
+
+  reconhecerJson(texto) { return nat.reconhecer(this.#r, texto); }
+  reconhecer(texto) { return JSON.parse(this.reconhecerJson(texto)); }
+
+  fechar() {
+    if (this.#r) {
+      nat.reconhecedorFechar(this.#r);
+      this.#r = null;
+    }
+  }
+
+  [Symbol.dispose]() { this.fechar(); }
+}
+
+/** As posições das k maiores notas (maior primeiro; empate pela menor posição; NaN é a pior). */
+export const escolher = (notas, k) => nat.escolher(notas, k);
+
+/** O destino só aparece no fechar(); saindo do bloco `using` sem fechar, abandona e o destino fica como estava. */
+export class Escritor {
+  #w;
+
+  constructor(caminho, esquema, { compressao = 1, hash = 0, blocoKb = 0 } = {}) {
+    this.#w = nat.criar(caminho, esquema, compressao, hash, blocoKb);
+  }
+
+  gravarTexto(texto) { nat.gravar(this.#w, texto); }
+  gravar(obj) { this.gravarTexto(JSON.stringify(obj)); }
+  descarregar() { nat.descarregar(this.#w); }
+
+  fechar() {
+    if (this.#w) {
+      const w = this.#w;
+      this.#w = null;
+      nat.fecharEscritor(w);
+    }
+  }
+
+  abandonar() {
+    if (this.#w) {
+      const w = this.#w;
+      this.#w = null;
+      nat.abandonar(w);
+    }
+  }
+
+  [Symbol.dispose]() { this.abandonar(); }
+}
+
+/** Roda `uso(recurso)` e fecha o recurso no fim, com ou sem erro (o `using` do Node 24, no Node 22). */
+const com = (recurso, uso) => {
+  try {
+    return uso(recurso);
+  } finally {
+    recurso.fechar();
+  }
+};
+
+// node index.js arq.jsw -> JSONL; --avaliar arq pedido k; --visao arq escopos pedido k; --reconhecer termos.jsw texto
+if (process.argv[1] === fileURLToPath(import.meta.url) && process.argv[2]) {
+  const [modo, ...resto] = process.argv.slice(2);
+  const saida = (s) => process.stdout.write(`${s}\n`);
+  switch (modo) {
+    case "--avaliar": {
+      const [arq, pedido, k] = resto;
+      com(new Leitor(arq), (a) => saida(a.avaliarJson(pedido, Number(k))));
+      break;
+    }
+    case "--visao": {
+      const [arq, escopos, pedido, k] = resto;
+      com(new Leitor(arq).visao(escopos), (a) => {
+        saida(a.campos.join(","));
+        for (let i = 0; i < a.linhas; i++) {
+          try {
+            saida(a.json(i));
+          } catch (e) {
+            if (!ehOculta(e)) throw e;
+          }
+        }
+        saida(a.avaliarJson(pedido, Number(k)));
+      });
+      break;
+    }
+    case "--reconhecer": {
+      const [termos, texto] = resto;
+      com(new Reconhecedor(termos), (r) => saida(r.reconhecerJson(texto)));
+      break;
+    }
+    default:
+      com(new Leitor(modo), (a) => {
+        for (let i = 0; i < a.linhas; i++) saida(a.json(i));
+      });
+  }
 }

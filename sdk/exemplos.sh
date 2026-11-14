@@ -4,7 +4,7 @@
 # ausente (nada). Sem toolchain = pula (e diz). Usa as bibliotecas de ../bin/<plataforma>.
 set -u
 cd "$(dirname "$0")"
-[ -d /opt/homebrew/opt/openjdk/bin ] && export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+. ./ambiente-linguagens.sh
 PLAT=$(uname -sm | sed "s/Darwin arm64/macos-arm64/; s/Linux x86_64/linux-x86_64/; s/Linux aarch64/linux-arm64/; s/ /-/g"); WJSW=../bin/$PLAT/wjsw
 for f in ../bin/$PLAT/libjsonw.*; do cp -f "$f" .; done
 T=$(mktemp -d /tmp/jsonw-ex.XXXXXX); ok=0; falhas=0; pulados=""
@@ -27,10 +27,17 @@ roda() {   # nome, comando (recebe arquivo campo valor [--varrer] no fim)
 }
 c() { local n=$1; shift; CMD=("$@"); roda "$n"; }
 cc -std=c11 -O2 -I. c/exemplo.c libjsonw.a -lm -o $T/c && c C $T/c
-c++ -std=c++17 -O2 -I. -Icpp cpp/exemplo.cpp libjsonw.a -lm -o $T/cpp && c C++ $T/cpp
+if c++ -std=c++23 -O2 -Wall -Wextra -I. -Icpp cpp/exemplo.cpp libjsonw.a -lm -o $T/cpp 2>$T/cpp.err; then c C++ $T/cpp; else echo "  FALHOU C++ (build)"; head -3 $T/cpp.err; falhas=$((falhas+1)); fi
 if command -v node >/dev/null; then NH=$(dirname $(dirname $(command -v node)))/include/node; cc -std=c11 -O2 -fPIC -shared -undefined dynamic_lookup -I"$NH" node/jsonw_node*.c libjsonw.a -lm -o node/jsonw.node 2>/dev/null || cc -std=c11 -O2 -fPIC -shared -I"$NH" node/jsonw_node*.c libjsonw.a -lm -o node/jsonw.node; c Node node node/exemplo.js; else pulados="$pulados node"; fi
 if command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);'; then c PHP php php/exemplo.php; else pulados="$pulados php"; fi
-if command -v python3 >/dev/null; then c Python python3 -I python/exemplo.py; else pulados="$pulados python"; fi
+PYS=""   # o Python mínimo (3.10) e o mais novo instalado
+PY_NOVO=$(compgen -c python3. | grep -E '^python3\.[0-9]+$' | sort -t. -k2 -n | tail -1)
+for p in python3.10 "$PY_NOVO"; do
+  [ -n "$p" ] && command -v "$p" >/dev/null && "$p" -c 'import sys; sys.exit(sys.version_info < (3, 10))' || continue
+  case " $PYS " in *" $p "*) ;; *) PYS="$PYS $p" ;; esac
+done
+for p in $PYS; do c "$p" "$p" -I python/exemplo.py; done
+[ -n "$PYS" ] || pulados="$pulados python(3.10+)"
 if command -v ruby >/dev/null; then c Ruby ruby ruby/exemplo.rb; else pulados="$pulados ruby"; fi
 if command -v go >/dev/null; then (cd go && go build -o $T/go ./cmd/exemplo 2>$T/go.b.err) && c Go $T/go || { echo "  FALHOU Go (build)"; head -3 $T/go.b.err; falhas=$((falhas+1)); }; else pulados="$pulados go"; fi
 if command -v cargo >/dev/null; then (cd rust && cargo build --release --example exemplo -q 2>$T/rs.b.err) && c Rust rust/target/release/examples/exemplo || { echo "  FALHOU Rust (build)"; head -3 $T/rs.b.err; falhas=$((falhas+1)); }; else pulados="$pulados rust"; fi

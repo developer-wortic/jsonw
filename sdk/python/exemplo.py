@@ -1,12 +1,18 @@
-# exemplo.py: abre um .jsw e mostra as linhas em que <campo> vale <valor> (JSON), pelo indice (ou varrendo, com --varrer).
-# python3 exemplo.py dados.jsw id 2
-import json, os, sys
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import jsonw
+# python3 exemplo.py dados.jsw id 2: as linhas em que o campo vale o valor (JSON), pelo índice; --varrer para sem índice.
+import json
+import sys
+from pathlib import Path
 
-arquivo, campo, texto = sys.argv[1:4]
-with jsonw.Leitor(arquivo) as a:
-    if campo not in a.campos: sys.exit(f"campo {campo} não existe")
-    if "--varrer" not in sys.argv[4:]: a.indexar(campo)
-    for i in a.chave(campo, json.loads(texto)):
-        sys.stdout.buffer.write(a.json(i).encode() + b"\n")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import jsonw  # noqa: E402
+
+arquivo, campo, texto, *resto = sys.argv[1:]
+try:
+    with jsonw.Leitor(arquivo) as a:
+        k = a.indice(campo)
+        if "--varrer" not in resto:
+            a.indexar(k)
+        for i in a.chave(k, json.loads(texto)):
+            sys.stdout.write(a.json(i) + "\n")
+except jsonw.ErroJsonW as e:
+    sys.exit(str(e))

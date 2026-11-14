@@ -2,9 +2,17 @@
 # prova.sh: cada SDK le o mesmo arquivo e produz o mesmo JSONL que o wjsw; depois grava e o wjsw confere. Sem toolchain = pula (e diz).
 set -u
 cd "$(dirname "$0")"
-[ -d /opt/homebrew/opt/openjdk/bin ] && export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"   # Java do Homebrew, se houver
-PLAT=$(uname -sm | sed "s/Darwin arm64/macos-arm64/; s/Linux x86_64/linux-x86_64/; s/MINGW64_NT-[0-9.]* x86_64/windows-x86_64/; s/MSYS_NT-[0-9.]* x86_64/windows-x86_64/; s/ /-/g"); WJSW=../bin/$PLAT/wjsw; [ -x $WJSW ] || WJSW=$WJSW.exe; [ -x $WJSW ] || { echo "sem binario para $PLAT em ../bin"; exit 1; }; for f in ../bin/$PLAT/libjsonw.*; do cp -f "$f" .; done; cp -f ../bin/$PLAT/jsonw.node node/ 2>/dev/null || true
+. "$(dirname "$0")/ambiente-linguagens.sh"   # as versões mais novas do Homebrew na frente do PATH
+PLAT=$(uname -sm | sed "s/Darwin arm64/macos-arm64/; s/Linux x86_64/linux-x86_64/; s/MINGW64_NT-[0-9.]* x86_64/windows-x86_64/; s/MSYS_NT-[0-9.]* x86_64/windows-x86_64/; s/ /-/g"); WJSW=../bin/$PLAT/wjsw; [ -x $WJSW ] || WJSW=$WJSW.exe; if [ -x $WJSW ]; then for f in ../bin/$PLAT/libjsonw.*; do cp -f "$f" .; done; cp -f ../bin/$PLAT/jsonw.node node/ 2>/dev/null || true; else WJSW=$(command -v wjsw) || { echo "sem wjsw: nem ../bin/$PLAT nem no PATH"; exit 1; }; [ -f libjsonw.dylib ] || [ -f libjsonw.so ] || { echo "sem libjsonw na pasta sdk"; exit 1; }; fi
 T=$(mktemp -d /tmp/jsonw-sdk.XXXXXX); falhas=0; ok=0; pulados=""
+PYS=""   # o Python mínimo (3.10) e o mais novo instalado; abaixo de 3.10 fica de fora como pulado
+PY_NOVO=$(compgen -c python3. | grep -E '^python3\.[0-9]+$' | sort -t. -k2 -n | tail -1)
+for p in python3.10 "$PY_NOVO"; do
+  [ -n "$p" ] && command -v "$p" >/dev/null || continue
+  if "$p" -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
+    case " $PYS " in *" $p "*) ;; *) PYS="$PYS $p" ;; esac
+  else pulados="$pulados $p(abaixo-do-minimo-3.10)"; fi
+done
 ESQ='id:i64,nome:texto,ativo:bool,preco:decimal[2],quando:tempo,peso:medida,valor:dinheiro,tags:lista<texto>,nota:f64?,vet:vf16[4],extra:qualquer'
 cat > $T/entrada.jsonl <<'EOF'
 {"id": 1, "nome": "Ação com acento, vírgula, \"aspas\" e barra \\", "ativo": true, "preco": "12.50", "quando": "2026-11-06T18:00:00-03:00", "peso": "3,5 km", "valor": "1.234,56 BRL", "tags": ["a", "b"], "nota": 0.5, "vet": [0.5, -1, 2, 0.25], "extra": {"x": [1, 2, null], "y": "z"}}
@@ -25,13 +33,13 @@ grava() {   # nome, comando que grava $T/<nome>.jsw a partir de $T/entrada.jsonl
 }
 echo "C (ABI direta)"
 cc -std=c11 -O2 -I. prova_c.c libjsonw.a -lm -o $T/prova_c && confere C $T/prova_c $T/base.jsw && grava C $T/prova_c --gravar "$ESQ" $T/entrada.jsonl $T/C.jsw
-echo "C++"; [ -x cpp/ler ] || c++ -std=c++17 -O2 -Wall cpp/ler.cpp libjsonw.a -lm -o cpp/ler 2>$T/cpp.err; confere C++ cpp/ler $T/base.jsw
+echo "C++"; if c++ -std=c++23 -O2 -Wall -Wextra -Wpedantic cpp/ler.cpp libjsonw.a -lm -o cpp/ler 2>$T/cpp.err; then confere C++ cpp/ler $T/base.jsw; else echo "  FALHOU C++ (build)"; head -5 $T/cpp.err; falhas=$((falhas+1)); fi
 echo "Node"; [ -f node/jsonw.node ] || { NH=$(dirname $(dirname $(command -v node 2>/dev/null || echo /usr/bin/node)))/include/node; [ -d "$NH" ] && cc -std=c11 -O2 -fPIC -shared -undefined dynamic_lookup -I"$NH" node/jsonw_node*.c libjsonw.a -lm -o node/jsonw.node 2>/dev/null || cc -std=c11 -O2 -fPIC -shared -I"$NH" node/jsonw_node*.c libjsonw.a -lm -o node/jsonw.node 2>/dev/null || true; }; if command -v node >/dev/null; then confere Node node node/index.js $T/base.jsw; grava Node node -e 'const j=require("./node"),fs=require("fs");const w=new j.Escritor(process.argv[3],process.argv[1]);for(const l of fs.readFileSync(process.argv[2],"utf8").split("\n"))if(l.trim())w.gravarTexto(l);w.fechar()' "$ESQ" $T/entrada.jsonl $T/Node.jsw; else pulados="$pulados node"; fi
-echo "Python"; if command -v python3 >/dev/null; then confere Python python3 python/jsonw.py $T/base.jsw; grava Python python3 -c 'import sys; sys.path.insert(0, "python"); import jsonw
+for PY in $PYS; do echo "$PY ($($PY -V 2>&1))"; confere $PY $PY python/jsonw.py $T/base.jsw; grava $PY $PY -c 'import sys; sys.path.insert(0, "python"); import jsonw
 w = jsonw.Escritor(sys.argv[3], sys.argv[1])
 for l in open(sys.argv[2], encoding="utf-8"):
     if l.strip(): w.gravar_texto(l)
-w.fechar()' "$ESQ" $T/entrada.jsonl $T/Python.jsw; else pulados="$pulados python3"; fi
+w.fechar()' "$ESQ" $T/entrada.jsonl $T/$PY.jsw; done; [ -n "$PYS" ] || pulados="$pulados python"
 echo "PHP"; if command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);'; then confere PHP php php/jsonw.php $T/base.jsw; grava PHP php -r 'require "php/jsonw.php"; $w = new JsonW\Escritor($argv[3], $argv[1]); foreach (file($argv[2]) as $l) if (trim($l) !== "") $w->gravarTexto($l); $w->fechar();' "$ESQ" $T/entrada.jsonl $T/PHP.jsw; else pulados="$pulados php"; fi
 echo "Go"; if command -v go >/dev/null; then (cd go && go build -o ler ./cmd/ler >/dev/null 2>$T/go.err) && confere Go go/ler $T/base.jsw && grava Go go/ler --gravar "$ESQ" $T/entrada.jsonl $T/Go.jsw || { echo "  FALHOU Go (build)"; head -5 $T/go.err; falhas=$((falhas+1)); }; else pulados="$pulados go"; fi
 echo "Rust"; if command -v cargo >/dev/null; then (cd rust && cargo build --release --example ler -q 2>$T/rust.err) && confere Rust rust/target/release/examples/ler $T/base.jsw || { echo "  FALHOU Rust (build)"; head -5 $T/rust.err; falhas=$((falhas+1)); }; else pulados="$pulados rust"; fi
@@ -57,7 +65,7 @@ igual() {   # nome, arquivo esperado, comando que imprime o JSON
 igual "C avaliar" $T/esperado-avaliar.json $T/prova_c --avaliar $T/base.jsw "$PED" 2; igual "C reconhecer" $T/esperado-reconhecer.json $T/prova_c --reconhecer $T/termos.jsw "$TXT"
 [ -x $T/cpp_ler ] && CPP=$T/cpp_ler || CPP=cpp/ler; [ -x $CPP ] && { igual "C++ avaliar" $T/esperado-avaliar.json $CPP --avaliar $T/base.jsw "$PED" 2; igual "C++ reconhecer" $T/esperado-reconhecer.json $CPP --reconhecer $T/termos.jsw "$TXT"; }
 command -v node >/dev/null && { igual "Node avaliar" $T/esperado-avaliar.json node node/index.js --avaliar $T/base.jsw "$PED" 2; igual "Node reconhecer" $T/esperado-reconhecer.json node node/index.js --reconhecer $T/termos.jsw "$TXT"; }
-command -v python3 >/dev/null && { igual "Python avaliar" $T/esperado-avaliar.json python3 python/jsonw.py --avaliar $T/base.jsw "$PED" 2; igual "Python reconhecer" $T/esperado-reconhecer.json python3 python/jsonw.py --reconhecer $T/termos.jsw "$TXT"; }
+for PY in $PYS; do igual "$PY avaliar" $T/esperado-avaliar.json $PY python/jsonw.py --avaliar $T/base.jsw "$PED" 2; igual "$PY reconhecer" $T/esperado-reconhecer.json $PY python/jsonw.py --reconhecer $T/termos.jsw "$TXT"; done
 command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);' && { igual "PHP avaliar" $T/esperado-avaliar.json php php/jsonw.php --avaliar $T/base.jsw "$PED" 2; igual "PHP reconhecer" $T/esperado-reconhecer.json php php/jsonw.php --reconhecer $T/termos.jsw "$TXT"; }
 command -v ruby >/dev/null && { igual "Ruby avaliar" $T/esperado-avaliar.json ruby ruby/jsonw.rb --avaliar $T/base.jsw "$PED" 2; igual "Ruby reconhecer" $T/esperado-reconhecer.json ruby ruby/jsonw.rb --reconhecer $T/termos.jsw "$TXT"; }
 [ -x go/ler ] && { igual "Go avaliar" $T/esperado-avaliar.json go/ler --avaliar $T/base.jsw "$PED" 2; igual "Go reconhecer" $T/esperado-reconhecer.json go/ler --reconhecer $T/termos.jsw "$TXT"; }
@@ -73,7 +81,7 @@ for i in $(seq 0 19); do echo "{\"id\":$i,\"nota\":$((i % 7)),\"renda\":$((1000*
 $T/prova_c --gravar "$VESQ" $T/visao.jsonl $T/visao.jsw && $T/prova_c --visao $VA "$VP" 3 > $T/esperado-visao.txt && ! grep -q renda $T/esperado-visao.txt && [ "$(wc -l < $T/esperado-visao.txt)" -eq 12 ] && { echo "  ok   C visao"; ok=$((ok+1)); } || { echo "  FALHOU C visao"; falhas=$((falhas+1)); }
 [ -x $CPP ] && igual "C++ visao" $T/esperado-visao.txt $CPP --visao $VA "$VP" 3
 command -v node >/dev/null && igual "Node visao" $T/esperado-visao.txt node node/index.js --visao $VA "$VP" 3
-command -v python3 >/dev/null && igual "Python visao" $T/esperado-visao.txt python3 python/jsonw.py --visao $VA "$VP" 3
+for PY in $PYS; do igual "$PY visao" $T/esperado-visao.txt $PY python/jsonw.py --visao $VA "$VP" 3; done
 command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);' && igual "PHP visao" $T/esperado-visao.txt php php/jsonw.php --visao $VA "$VP" 3
 command -v ruby >/dev/null && igual "Ruby visao" $T/esperado-visao.txt ruby ruby/jsonw.rb --visao $VA "$VP" 3
 [ -x go/ler ] && igual "Go visao" $T/esperado-visao.txt go/ler --visao $VA "$VP" 3
@@ -85,8 +93,8 @@ command -v java >/dev/null && java -version 2>&1 | grep -qE 'version "(2[2-9]|[3
 # que tem saida automatica do escritor (with do Python) ou fechar/abandonar explicitos (Node): o arquivo pela metade nao aparece
 echo "ABI 1.2.1: handle fechado, abandonar, cap curto"
 cc -std=c11 -O2 -I. prova_abi.c libjsonw.a -lm -o $T/prova_abi 2>$T/abi.err && $T/prova_abi $T > $T/abi.out 2>&1 && { echo "  ok   C handle nulo, abandonar, cap curto, escolher"; ok=$((ok+1)); } || { echo "  FALHOU C (ABI)"; head -5 $T/abi.err $T/abi.out; falhas=$((falhas+1)); }
-if command -v python3 >/dev/null; then python3 -c 'import sys, os; sys.path.insert(0, "python"); import jsonw
-d = sys.argv[1] + "/py-abandono.jsw"
+for PY in $PYS; do $PY -c 'import sys, os; sys.path.insert(0, "python"); import jsonw
+d = sys.argv[1] + "/py-abandono-%d.%d.jsw" % sys.version_info[:2]
 try:
     with jsonw.Escritor(d, "id:i64") as w:
         w.gravar({"id": 1}); raise RuntimeError("erro de quem grava")
@@ -97,7 +105,7 @@ a = jsonw.Leitor(d); a.fechar()
 try: a.json(0); raise SystemExit("leitor fechado respondeu")
 except jsonw.ErroJsonW: pass
 w = jsonw.Escritor(d, "id:i64"); w.gravar({"id": 2}); w.gravar({"id": 3}); w.abandonar()
-assert jsonw.Leitor(d).linhas == 1, "abandonar publicou"' $T 2>$T/pyab.err && { echo "  ok   Python with por erro nao publica, abandonar, leitor fechado"; ok=$((ok+1)); } || { echo "  FALHOU Python (abandonar)"; head -5 $T/pyab.err; falhas=$((falhas+1)); }; fi
+assert jsonw.Leitor(d).linhas == 1, "abandonar publicou"' $T 2>$T/pyab.err && { echo "  ok   $PY with por erro nao publica, abandonar, leitor fechado"; ok=$((ok+1)); } || { echo "  FALHOU $PY (abandonar)"; head -5 $T/pyab.err; falhas=$((falhas+1)); }; done
 if command -v node >/dev/null; then node -e 'const j=require("./node"),fs=require("fs");const d=process.argv[1]+"/node-abandono.jsw";
 let w=new j.Escritor(d,"id:i64");w.gravar({id:1});w.fechar();
 w=new j.Escritor(d,"id:i64");w.gravar({id:2});w.gravar({id:3});w.abandonar();
