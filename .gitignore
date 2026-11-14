@@ -7,3 +7,4 @@ sdk/rust/Cargo.lock
 *.jsw
 __pycache__/
 *.pyc
+sdk/dart/.dart_tool/
