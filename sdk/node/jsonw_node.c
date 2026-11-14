@@ -88,6 +88,7 @@ static napi_value iniciar(napi_env env, napi_value exports) {
         {"descarregar", descarregar}, {"fecharEscritor", fechar_escritor}, {"abandonar", abandonar}, {"versao", versao}};
     for (size_t i = 0; i < sizeof F / sizeof *F; i++) { napi_value fn; napi_create_function(env, F[i].n, NAPI_AUTO_LENGTH, F[i].f, NULL, &fn); napi_set_named_property(env, exports, F[i].n, fn); }
     { void jsonw_node_ops_registrar(napi_env, napi_value); jsonw_node_ops_registrar(env, exports); }   /* avaliar, escolher, reconhecer (jsonw_node_ops.c) */
+    { void jsonw_node_chave_registrar(napi_env, napi_value); jsonw_node_chave_registrar(env, exports); }   /* indexar, temIndice, chave (jsonw_node_chave.c) */
     return exports;
 }
 NAPI_MODULE(jsonw, iniciar)

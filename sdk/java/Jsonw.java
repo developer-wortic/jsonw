@@ -33,6 +33,8 @@ public final class Jsonw {
         GRAVAR = fn("jsonw_gravar_json", FunctionDescriptor.of(I32, P, P, SZ, P, SZ)), DESCARREGAR = fn("jsonw_descarregar", FunctionDescriptor.of(I32, P)),
         FECHAR_W = fn("jsonw_fechar_escritor", FunctionDescriptor.of(I32, P)), ABANDONAR = fn("jsonw_abandonar", FunctionDescriptor.of(I32, P)), VERSAO = fn("jsonw_versao", FunctionDescriptor.of(P)), VISAO = fn("jsonw_visao", FunctionDescriptor.of(I32, P, P, P, SZ));
 
+    static final MethodHandle INDEXAR = fn("jsonw_indexar", FunctionDescriptor.of(I32, P, I32)), TEM_INDICE = fn("jsonw_tem_indice", FunctionDescriptor.of(I32, P, I32)),
+        CHAVE = fn("jsonw_chave", FunctionDescriptor.of(SZ, P, I32, P, SZ, P, SZ));   /* BUSCAR POR CHAVE (1.3.13) */
     static String str(MemorySegment p) { return p.reinterpret(Long.MAX_VALUE).getString(0); }
     public static String versao() { try { return str((MemorySegment) VERSAO.invokeExact()); } catch (Throwable t) { throw new RuntimeException(t); } }
     public static final class LinhaOculta extends RuntimeException { LinhaOculta() { super("linha oculta pela visao"); } }   /* linha de outro tenant depois de visao() (-3 na ABI) */
@@ -64,6 +66,17 @@ public final class Jsonw {
         public String json(long i) { return lerTexto((b, cap) -> (long) LINHA_JSON.invokeExact(a, i, b, cap)); }
         public String texto(long i) { return lerTexto((b, cap) -> (long) LINHA_TEXTO.invokeExact(a, i, b, cap)); }
         public String campo(long i, int k) { return lerTexto((b, cap) -> (long) CAMPO_JSON.invokeExact(a, i, k, b, cap)); }
+        /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo k vale o valor (o JSON do valor no tipo do campo: "7", "\"RJ\""), em ordem; com indexar(k), sem varrer */
+        public void indexar(int k) { try { if ((int) INDEXAR.invokeExact(a, k) != 0) throw new RuntimeException("campo sem indice"); } catch (RuntimeException e) { throw e; } catch (Throwable t) { throw new RuntimeException(t); } }
+        public boolean temIndice(int k) { try { return (int) TEM_INDICE.invokeExact(a, k) == 1; } catch (Throwable t) { throw new RuntimeException(t); } }
+        public long[] chave(int k, String valor) {
+            try (Arena ar = Arena.ofConfined()) {
+                MemorySegment v = ar.allocateFrom(valor); long nv = v.byteSize() - 1, cap = 16;
+                for (;;) { MemorySegment out = ar.allocate(ValueLayout.JAVA_LONG, cap); long n = (long) CHAVE.invokeExact(a, k, v, nv, out, cap);
+                    if (n == -2) throw new RuntimeException("valor nao e do tipo do campo"); if (n < 0) throw new RuntimeException("campo invalido");
+                    if (n <= cap) return out.asSlice(0, n * 8).toArray(ValueLayout.JAVA_LONG); cap = n; }
+            } catch (RuntimeException e) { throw e; } catch (Throwable t) { throw new RuntimeException(t); }
+        }
         public void conferir() { try (Arena ar = Arena.ofConfined()) { MemorySegment erro = ar.allocate(200); if ((int) CONFERIR.invokeExact(a, erro, 200L) != 0) throw new RuntimeException(str(erro)); } catch (RuntimeException e) { throw e; } catch (Throwable t) { throw new RuntimeException(t); } }
         public Leitor visao(String escopos) {   /* trava o que a sessao ve ("pessoal vendas tenant:42"): esquema e campos so os visiveis; linha de outro tenant = LinhaOculta */
             try (Arena ar = Arena.ofConfined()) { MemorySegment erro = ar.allocate(300); if ((int) VISAO.invokeExact(a, ar.allocateFrom(escopos), erro, 300L) != 0) throw new RuntimeException(str(erro)); esquema = str((MemorySegment) ESQUEMA.invokeExact(a)); campos.clear(); int n = (int) CAMPOS.invokeExact(a); for (int i = 0; i < n; i++) campos.add(str((MemorySegment) CAMPO_NOME.invokeExact(a, i))); } catch (RuntimeException e) { throw e; } catch (Throwable t) { throw new RuntimeException(t); }

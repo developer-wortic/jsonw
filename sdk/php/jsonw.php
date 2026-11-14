@@ -14,6 +14,7 @@ final class Lib {
             const char *jsonw_campo_nome(const void *a, int campo);
             int64_t jsonw_linha_json(void *a, uint64_t linha, char *saida, size_t cap); int64_t jsonw_linha_texto(void *a, uint64_t linha, char *saida, size_t cap);
             int64_t jsonw_campo_json(void *a, uint64_t linha, int campo, char *saida, size_t cap); int jsonw_conferir(void *a, char *erro, size_t nerro);
+            int jsonw_indexar(void *a, int campo); int jsonw_tem_indice(const void *a, int campo); int64_t jsonw_chave(void *a, int campo, const char *valor, size_t n, uint64_t *linhas, size_t max);
             void *jsonw_criar(const char *caminho, const char *esquema, char *erro, size_t nerro); int jsonw_opcoes(void *w, int nivel, int hash, int bloco_kb);
             int jsonw_gravar_json(void *w, const char *json, size_t n, char *erro, size_t nerro); int jsonw_descarregar(void *w); int jsonw_fechar_escritor(void *w); int jsonw_abandonar(void *w);
             int64_t jsonw_avaliar(void *a, const char *pedido, size_t n, size_t k, char *saida, size_t cap, char *erro, size_t nerro); int64_t jsonw_escolher(const double *notas, size_t n, size_t k, uint64_t *linhas);
@@ -61,6 +62,14 @@ final class Leitor implements \IteratorAggregate, \Countable {
     public function linha(int $i): array { return json_decode($this->json($i), true, 512, JSON_THROW_ON_ERROR); }
     public function campo(int $i, int|string $campo): mixed { $k = is_int($campo) ? $campo : array_search($campo, $this->campos, true); $f = Lib::ffi(); $a = $this->a; return json_decode(Lib::texto(fn($b, $c) => $f->jsonw_campo_json($a, $i, $k, $b, $c)), true); }
     public function conferir(): bool { $e = Lib::ffi()->new("char[200]"); if (Lib::ffi()->jsonw_conferir($this->a, $e, 200)) throw new \RuntimeException(\FFI::string($e)); return true; }
+    /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo vale o valor (valor em PHP: 2, "RJ"), em ordem; com indexar(), sem varrer */
+    public function indexar(int|string $campo): static { if (Lib::ffi()->jsonw_indexar($this->a, $this->k($campo))) throw new \RuntimeException("campo sem indice"); return $this; }
+    public function temIndice(int|string $campo): bool { return Lib::ffi()->jsonw_tem_indice($this->a, $this->k($campo)) === 1; }
+    public function chave(int|string $campo, mixed $valor): array {
+        $f = Lib::ffi(); $k = $this->k($campo); $v = json_encode($valor, JSON_UNESCAPED_UNICODE); $cap = 16;
+        for (;;) { $out = $f->new("uint64_t[$cap]"); $n = $f->jsonw_chave($this->a, $k, $v, strlen($v), $out, $cap); if ($n === -2) throw new \RuntimeException("valor nao e do tipo do campo"); if ($n < 0) throw new \RuntimeException("campo invalido"); if ($n <= $cap) { $r = []; for ($i = 0; $i < $n; $i++) $r[] = $out[$i]; return $r; } $cap = $n; }
+    }
+    private function k(int|string $campo): int { return is_int($campo) ? $campo : (array_search($campo, $this->campos, true) === false ? -1 : array_search($campo, $this->campos, true)); }
     public function visao(string $escopos): static { $f = Lib::ffi(); $e = $f->new("char[300]"); if ($f->jsonw_visao($this->a, $escopos, $e, 300)) throw new \RuntimeException(\FFI::string($e)); $this->esquema = $f->jsonw_esquema($this->a); $this->campos = []; for ($i = 0; $i < $f->jsonw_campos($this->a); $i++) $this->campos[] = $f->jsonw_campo_nome($this->a, $i); return $this; }   /* trava o que a sessao ve */
     public function avaliarJson(string|array $pedido, int $k = 10): string {   /* AVALIAR + ESCOLHER: as k melhores, [{"linha","nota"}] */
         $p = is_string($pedido) ? $pedido : json_encode($pedido, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR); $f = Lib::ffi(); $a = $this->a; $e = $f->new("char[300]");

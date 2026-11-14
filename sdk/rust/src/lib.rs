@@ -6,6 +6,7 @@
 use std::ffi::{c_char, c_int, c_void, CStr, CString};
 mod ops;
 mod visao;   /* Leitor::visao (ABI 1.2): src/visao.rs */
+mod chave;   /* Leitor::indexar, tem_indice, chave (ABI 1.3.13): src/chave.rs */
 pub use ops::{escolher, Reconhecedor};   /* avaliar (em Leitor), escolher, Reconhecedor: src/ops.rs */
 
 extern "C" {

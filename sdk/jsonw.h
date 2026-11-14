@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define JSONW_VERSAO "1.3.12"
+#define JSONW_VERSAO "1.3.13"
 #ifndef JSONW_API
 #  if defined(_WIN32)
 #    define JSONW_API __declspec(dllexport)
@@ -31,6 +31,13 @@ JSONW_API const char *jsonw_campo_nome(const void *a, int campo);
 JSONW_API int64_t jsonw_linha_json(void *a, uint64_t linha, char *saida, size_t cap);   /* a linha como JSON; devolve o tamanho (sem o 0), -1 = erro, -2 = cap curto (chame de novo com cap maior), -3 = linha que a visao esconde */
 JSONW_API int64_t jsonw_linha_texto(void *a, uint64_t linha, char *saida, size_t cap);  /* idem em jsonW-texto */
 JSONW_API int64_t jsonw_campo_json(void *a, uint64_t linha, int campo, char *saida, size_t cap);   /* so um campo (acesso direto, sem decodificar o resto) */
+/* BUSCAR POR CHAVE (1.3.13): as linhas em que <campo> vale <valor> (JSON do tipo do campo: 2, "abc"), em ordem crescente.
+ * Escreve ate max posicoes em linhas[] e devolve QUANTAS existem (> max: chame de novo com mais espaco); -1 = handle ou
+ * campo invalido; -2 = valor que nao e do tipo do campo. Linha oculta pela visao nao entra. Com indice (jsonw_indexar):
+ * busca binaria, sem varrer; sem indice: varre o arquivo. jsonw_tem_indice diz qual dos dois vai acontecer. */
+JSONW_API int jsonw_indexar(void *a, int campo);                 /* monta o indice do campo neste handle (troca o de outro campo); 0 = ok */
+JSONW_API int jsonw_tem_indice(const void *a, int campo);        /* 1 = o campo tem indice neste handle */
+JSONW_API int64_t jsonw_chave(void *a, int campo, const char *valor, size_t n, uint64_t *linhas, size_t max);
 JSONW_API int jsonw_conferir(void *a, char *erro, size_t nerro);                       /* crc32c + hash de cada bloco e a cadeia do arquivo */
 /* visao (1.2): servidor multi-tenant trava no handle o que a sessao pode ver ("pessoal vendas tenant:42") ANTES de entrega-lo.
  * Dali em diante campos/esquema/nomes sao so das colunas visiveis, linha de outro tenant devolve -3, avaliar recusa campo

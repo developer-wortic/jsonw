@@ -39,6 +39,13 @@ public:
     std::string texto(uint64_t i) { return texto_([&](char *b, size_t c) { return jsonw_linha_texto(a_, i, b, c); }); }
     std::string campo(uint64_t i, int k) { return texto_([&](char *b, size_t c) { return jsonw_campo_json(a_, i, k, b, c); }); }
     void conferir() { char erro[200] = ""; if (jsonw_conferir(a_, erro, sizeof erro)) throw std::runtime_error(erro); }
+    /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo k vale o valor (JSON do tipo do campo), em ordem; com indexar(k), sem varrer */
+    void indexar(int k) { if (jsonw_indexar(a_, k)) throw std::runtime_error("campo sem indice"); }
+    bool tem_indice(int k) const { return jsonw_tem_indice(a_, k) == 1; }
+    std::vector<uint64_t> chave(int k, const std::string &valor) {
+        std::vector<uint64_t> v(16);
+        for (;;) { int64_t n = jsonw_chave(a_, k, valor.data(), valor.size(), v.data(), v.size()); if (n == -2) throw std::runtime_error("valor nao e do tipo do campo"); if (n < 0) throw std::runtime_error("campo invalido"); if ((size_t)n <= v.size()) { v.resize((size_t)n); return v; } v.resize((size_t)n); }
+    }
     /* visao (1.2): trava o que a sessao ve ("pessoal vendas tenant:42"): campos e esquema so os visiveis, linha de outro tenant = Oculta */
     void visao(const std::string &escopos) { char erro[300] = ""; if (jsonw_visao(a_, escopos.c_str(), erro, sizeof erro)) throw std::runtime_error(erro); }
     /* AVALIAR + ESCOLHER: pedido em JSON ({"cosseno":{"campo":"vet","consulta":[..]}}, {"pesos":{..}}, ...) -> as k melhores, [{"linha","nota"}] */

@@ -15,6 +15,11 @@ class Leitor {
   linha(i) { return JSON.parse(this.json(i)); }
   campo(i, campo) { const k = typeof campo === "number" ? campo : this.campos.indexOf(campo); return JSON.parse(nat.campoJson(this._a, i, k)); }
   conferir() { return nat.conferir(this._a); }
+  /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo vale o valor (valor em JS: 7, "RJ"), em ordem; com indexar(campo), sem varrer */
+  _k(campo) { return typeof campo === "number" ? campo : this.campos.indexOf(campo); }
+  indexar(campo) { nat.indexar(this._a, this._k(campo)); return this; }
+  temIndice(campo) { return nat.temIndice(this._a, this._k(campo)); }
+  chave(campo, valor) { return nat.chave(this._a, this._k(campo), JSON.stringify(valor)); }
   visao(escopos) { nat.visao(this._a, escopos); this.esquema = nat.esquema(this._a); this.campos = nat.campos(this._a); return this; }   /* trava o que a sessao ve; linha de outro tenant: erro com code OCULTA */
   avaliarJson(pedido, k = 10) { return nat.avaliar(this._a, typeof pedido === "string" ? pedido : JSON.stringify(pedido), k); }
   avaliar(pedido, k = 10) { return JSON.parse(this.avaliarJson(pedido, k)); }   /* as k melhores: [{linha, nota}], da maior nota para a menor */

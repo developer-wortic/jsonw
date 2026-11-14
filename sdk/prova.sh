@@ -38,6 +38,7 @@ echo "Rust"; if command -v cargo >/dev/null; then (cd rust && cargo build --rele
 echo "Java"; if command -v java >/dev/null && java -version 2>&1 | grep -qE 'version "(2[2-9]|[3-9][0-9])'; then confere Java java --enable-native-access=ALL-UNNAMED -Dstdout.encoding=UTF-8 -Dfile.encoding=UTF-8 java/Jsonw.java $T/base.jsw; grava Java java --enable-native-access=ALL-UNNAMED -Dfile.encoding=UTF-8 java/Gravar.java "$ESQ" $T/entrada.jsonl $T/Java.jsw; else pulados="$pulados java(22+)"; fi
 echo "Swift"; if command -v swiftc >/dev/null; then swiftc -I swift swift/jsonw.swift swift/jsonw_ops.swift swift/main.swift libjsonw.a -o $T/swift_ler 2>$T/swift.err && confere Swift $T/swift_ler $T/base.jsw && grava Swift $T/swift_ler --gravar "$ESQ" $T/entrada.jsonl $T/Swift.jsw || { echo "  FALHOU Swift (build)"; head -5 $T/swift.err; falhas=$((falhas+1)); }; else pulados="$pulados swift"; fi
 echo "Kotlin"; if command -v kotlinc >/dev/null && command -v java >/dev/null; then (kotlinc kotlin/Jsonw.kt kotlin/JsonwOps.kt -include-runtime -d $T/jsonw.jar 2>$T/kt.err) && confere Kotlin java --enable-native-access=ALL-UNNAMED -Dstdout.encoding=UTF-8 -Dfile.encoding=UTF-8 -jar $T/jsonw.jar $T/base.jsw && grava Kotlin java --enable-native-access=ALL-UNNAMED -Dfile.encoding=UTF-8 -jar $T/jsonw.jar --gravar "$ESQ" $T/entrada.jsonl $T/Kotlin.jsw || { echo "  FALHOU Kotlin (build)"; head -5 $T/kt.err; falhas=$((falhas+1)); }; else pulados="$pulados kotlin"; fi
+echo "Ruby"; if command -v ruby >/dev/null; then confere Ruby ruby ruby/jsonw.rb $T/base.jsw; grava Ruby ruby ruby/jsonw.rb --gravar "$ESQ" $T/entrada.jsonl $T/Ruby.jsw; else pulados="$pulados ruby"; fi
 
 # operacoes (ABI 1.1): o mesmo pedido de AVALIAR (cosseno no vf16, top-2) e o mesmo RECONHECER em cada SDK tem de dar o JSON
 # identico ao do wjsw (que usa o nucleo direto). Linguagem sem toolchain ja foi pulada acima.
@@ -58,6 +59,7 @@ igual "C avaliar" $T/esperado-avaliar.json $T/prova_c --avaliar $T/base.jsw "$PE
 command -v node >/dev/null && { igual "Node avaliar" $T/esperado-avaliar.json node node/index.js --avaliar $T/base.jsw "$PED" 2; igual "Node reconhecer" $T/esperado-reconhecer.json node node/index.js --reconhecer $T/termos.jsw "$TXT"; }
 command -v python3 >/dev/null && { igual "Python avaliar" $T/esperado-avaliar.json python3 python/jsonw.py --avaliar $T/base.jsw "$PED" 2; igual "Python reconhecer" $T/esperado-reconhecer.json python3 python/jsonw.py --reconhecer $T/termos.jsw "$TXT"; }
 command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);' && { igual "PHP avaliar" $T/esperado-avaliar.json php php/jsonw.php --avaliar $T/base.jsw "$PED" 2; igual "PHP reconhecer" $T/esperado-reconhecer.json php php/jsonw.php --reconhecer $T/termos.jsw "$TXT"; }
+command -v ruby >/dev/null && { igual "Ruby avaliar" $T/esperado-avaliar.json ruby ruby/jsonw.rb --avaliar $T/base.jsw "$PED" 2; igual "Ruby reconhecer" $T/esperado-reconhecer.json ruby ruby/jsonw.rb --reconhecer $T/termos.jsw "$TXT"; }
 [ -x go/ler ] && { igual "Go avaliar" $T/esperado-avaliar.json go/ler --avaliar $T/base.jsw "$PED" 2; igual "Go reconhecer" $T/esperado-reconhecer.json go/ler --reconhecer $T/termos.jsw "$TXT"; }
 [ -x rust/target/release/examples/ler ] && { igual "Rust avaliar" $T/esperado-avaliar.json rust/target/release/examples/ler --avaliar $T/base.jsw "$PED" 2; igual "Rust reconhecer" $T/esperado-reconhecer.json rust/target/release/examples/ler --reconhecer $T/termos.jsw "$TXT"; }
 command -v java >/dev/null && java -version 2>&1 | grep -qE 'version "(2[2-9]|[3-9][0-9])' && { igual "Java avaliar" $T/esperado-avaliar.json java --enable-native-access=ALL-UNNAMED -Dstdout.encoding=UTF-8 -Dfile.encoding=UTF-8 java/Jsonw.java --avaliar $T/base.jsw "$PED" 2; igual "Java reconhecer" $T/esperado-reconhecer.json java --enable-native-access=ALL-UNNAMED -Dstdout.encoding=UTF-8 -Dfile.encoding=UTF-8 java/Jsonw.java --reconhecer $T/termos.jsw "$TXT"; }
@@ -73,6 +75,7 @@ $T/prova_c --gravar "$VESQ" $T/visao.jsonl $T/visao.jsw && $T/prova_c --visao $V
 command -v node >/dev/null && igual "Node visao" $T/esperado-visao.txt node node/index.js --visao $VA "$VP" 3
 command -v python3 >/dev/null && igual "Python visao" $T/esperado-visao.txt python3 python/jsonw.py --visao $VA "$VP" 3
 command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);' && igual "PHP visao" $T/esperado-visao.txt php php/jsonw.php --visao $VA "$VP" 3
+command -v ruby >/dev/null && igual "Ruby visao" $T/esperado-visao.txt ruby ruby/jsonw.rb --visao $VA "$VP" 3
 [ -x go/ler ] && igual "Go visao" $T/esperado-visao.txt go/ler --visao $VA "$VP" 3
 [ -x rust/target/release/examples/ler ] && igual "Rust visao" $T/esperado-visao.txt rust/target/release/examples/ler --visao $VA "$VP" 3
 command -v java >/dev/null && java -version 2>&1 | grep -qE 'version "(2[2-9]|[3-9][0-9])' && igual "Java visao" $T/esperado-visao.txt java --enable-native-access=ALL-UNNAMED -Dstdout.encoding=UTF-8 -Dfile.encoding=UTF-8 java/Jsonw.java --visao $VA "$VP" 3
@@ -101,6 +104,9 @@ w=new j.Escritor(d,"id:i64");w.gravar({id:2});w.gravar({id:3});w.abandonar();
 const a=new j.Leitor(d);if(a.linhas!==1)throw new Error("abandonar publicou: "+a.linhas);a.fechar();
 let caiu=false;try{a.json(0)}catch(e){caiu=true}if(!caiu)throw new Error("leitor fechado respondeu");
 if(j.escolher([0.2,0.9,0.5],1e12).join()!=="1,2,0")throw new Error("escolher com k gigante");if(j.escolher([1,2],-5).length!==0)throw new Error("escolher com k negativo")' $T 2>$T/nodeab.err && { echo "  ok   Node abandonar, leitor fechado, escolher com k fora da faixa"; ok=$((ok+1)); } || { echo "  FALHOU Node (abandonar)"; head -5 $T/nodeab.err; falhas=$((falhas+1)); }; fi
+echo "busca por chave (ABI 1.3.13): com e sem indice, chave ausente, repetida, valor vazio, tipo errado, visao"
+cc -std=c11 -O2 -I. prova_chave.c libjsonw.a -lm -o $T/prova_chave 2>$T/chave.err && $T/prova_chave > $T/chave.out 2>&1 && grep -q "TUDO CERTO" $T/chave.out && { echo "  ok   C jsonw_chave ($(grep -c '^  ok' $T/chave.out) casos)"; ok=$((ok+1)); } || { echo "  FALHOU C jsonw_chave"; grep -v '^  ok' $T/chave.out $T/chave.err | head -5; falhas=$((falhas+1)); }
+bash exemplos.sh > $T/ex.out 2>&1; grep '^  ok\|^  FALHOU' $T/ex.out; ok=$((ok + $(grep -c '^  ok' $T/ex.out))); falhas=$((falhas + $(grep -c '^  FALHOU' $T/ex.out)))
 echo; echo "SDKs: $ok provas ok, $falhas falhas; pulados (sem toolchain aqui):${pulados:- nenhum}"
 [ -n "${JSONW_PROVA_MANTER:-}" ] && echo "arquivos em $T" || rm -rf $T
 exit $falhas

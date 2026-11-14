@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="versão" src="https://img.shields.io/badge/vers%C3%A3o-1.3.12-1d1d1f?style=flat-square">
+  <img alt="versão" src="https://img.shields.io/badge/vers%C3%A3o-1.3.13-1d1d1f?style=flat-square">
   <img alt="plataformas" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binários-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-10%20linguagens-2ac2f3?style=flat-square">
   <img alt="núcleo" src="https://img.shields.io/badge/núcleo-C%20sem%20dependência-1d1d1f?style=flat-square">
@@ -263,6 +263,7 @@ rodam as operações, e todos passam pela **mesma prova, byte a byte** (`cd sdk 
 | Python 3 | `sdk/python/jsonw.py` | `jsonw.Leitor`, `jsonw.Escritor` |
 | Node.js | `npm install @wortictecnologia/jsonw` (N-API, pré-compilado) | `{ Leitor, Escritor }` |
 | PHP 8 | `sdk/php/jsonw.php` (FFI) | `JsonW\Leitor`, `JsonW\Escritor` |
+| Ruby 2.6+ | `sdk/ruby/jsonw.rb` (Fiddle, da biblioteca padrão) | `JsonW::Leitor`, `JsonW::Escritor` |
 | Go | `sdk/go/` (cgo) | `jsonw.Abrir`, `jsonw.Criar` |
 | Rust | `sdk/rust/` | `jsonw::Leitor`, `jsonw::Escritor` |
 | Java 22+ | `sdk/java/Jsonw.java` (FFM, sem JNI) | `Jsonw.Leitor`, `Jsonw.Escritor` |
@@ -349,6 +350,21 @@ processos só renovam com `touch /usr/local/lsws/admin/tmp/.lsphp_restart.txt`.
 </details>
 
 <details>
+<summary><b>Ruby</b></summary>
+
+```ruby
+require_relative 'sdk/ruby/jsonw'
+JsonW::Escritor.criar('vendas.jsw', 'id:i64,produto:texto,preco:dinheiro') do |w|
+  w.gravar({ 'id' => 1, 'produto' => 'Café especial', 'preco' => '12,50 BRL' })
+end
+
+JsonW::Leitor.abrir('vendas.jsw') { |r| puts r.campo(0, 'preco'); r.conferir }
+```
+
+Só a biblioteca padrão (Fiddle). Se a `libjsonw` não estiver ao lado do arquivo, aponte `JSONW_LIB` para ela.
+</details>
+
+<details>
 <summary><b>C</b></summary>
 
 ```c
@@ -364,6 +380,38 @@ jsonw_campo_json(a, 0, 2, saida, sizeof saida);   /* "12.50 BRL" */
 jsonw_fechar(a);
 ```
 </details>
+
+### Buscar por chave (1.3.13)
+
+As linhas em que um campo vale um valor, em ordem. Sem índice, a busca varre o arquivo; com `indexar(campo)`, o índice é
+montado uma vez no leitor e cada busca vira busca binária. Chave repetida devolve todas as linhas; linha de outro espaço
+(visão) não entra. Medido num arquivo de 1 milhão de linhas, mediana de 200 buscas por `id` (macOS arm64):
+
+| | Mediana | p95 |
+|---|---|---|
+| Varrendo | 142,8 ms | 204,3 ms |
+| Pelo índice (montado em 193 ms) | 0,196 ms | 0,315 ms |
+
+```js
+const { Leitor } = require("@wortictecnologia/jsonw");
+const a = new Leitor("empresas.jsw");
+a.indexar("uf");                                   // uma vez; depois cada busca não varre
+for (const i of a.chave("uf", "SP")) console.log(a.linha(i));   // as linhas em que uf = "SP", em ordem
+a.fechar();
+```
+
+Em Python (o SDK Python ainda varre: compara o campo de cada linha):
+
+```python
+import jsonw
+with jsonw.Leitor("empresas.jsw") as a:
+    for i in range(a.linhas):
+        if a.campo(i, "uf") == "SP":
+            print(a.linha(i))
+```
+
+Na ABI: `jsonw_indexar(a, campo)`, `jsonw_tem_indice(a, campo)` e `jsonw_chave(a, campo, valor, n, linhas, max)`. Nos SDKs:
+`indexar`, `tem_indice`/`temIndice` e `chave`; exemplo de 15 linhas em `sdk/<linguagem>/exemplo.*`. O SDK Python ainda não tem a busca por chave.
 
 ## Com os bancos que você já tem
 

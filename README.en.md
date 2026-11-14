@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="version" src="https://img.shields.io/badge/version-1.3.12-1d1d1f?style=flat-square">
+  <img alt="version" src="https://img.shields.io/badge/version-1.3.13-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-10%20languages-2ac2f3?style=flat-square">
   <img alt="core" src="https://img.shields.io/badge/core-C%2C%20zero%20deps-1d1d1f?style=flat-square">
@@ -158,7 +158,7 @@ sequenceDiagram
 ## SDKs
 
 A stable C ABI ([`sdk/jsonw.h`](sdk/jsonw.h) + `libjsonw`) and one SDK per language, all checked by the same byte-for-byte
-test (`cd sdk && bash prova.sh`): **C, C++17, Python 3, Node.js, PHP 8, Go, Rust, Java 22+, Kotlin, Swift**. Node.js from npm:
+test (`cd sdk && bash prova.sh`): **C, C++17, Python 3, Node.js, PHP 8, Ruby, Go, Rust, Java 22+, Kotlin, Swift**. Node.js from npm:
 `npm install @wortictecnologia/jsonw` (prebuilt for macOS arm64 and Linux x64, plus the `jsonw` command).
 
 ```python
@@ -169,6 +169,38 @@ with jsonw.Leitor("sales.jsw") as r:                                          # 
     print(r.campo(0, "price"))                                                # campo = direct field access
     r.conferir()                                                              # conferir = verify custody
 ```
+
+### Lookup by key (1.3.13)
+
+The rows where a field equals a value, in order. Without an index the lookup scans the file; after `indexar(field)` the index
+is built once in the reader and every lookup is a binary search. A repeated key returns every row; rows of another tenant
+(view) are left out. Measured on a 1-million-row file, median of 200 lookups by `id` (macOS arm64):
+
+| | Median | p95 |
+|---|---|---|
+| Scan | 142.8 ms | 204.3 ms |
+| Index (built in 193 ms) | 0.196 ms | 0.315 ms |
+
+```js
+const { Leitor } = require("@wortictecnologia/jsonw");
+const a = new Leitor("companies.jsw");
+a.indexar("uf");                                   // once; afterwards no lookup scans
+for (const i of a.chave("uf", "SP")) console.log(a.linha(i));   // rows where uf = "SP", in order
+a.fechar();
+```
+
+In Python (the Python SDK still scans: it compares the field of each row):
+
+```python
+import jsonw
+with jsonw.Leitor("companies.jsw") as a:
+    for i in range(a.linhas):
+        if a.campo(i, "uf") == "SP":
+            print(a.linha(i))
+```
+
+ABI: `jsonw_indexar(a, field)`, `jsonw_tem_indice(a, field)` and `jsonw_chave(a, field, value, n, rows, max)`. SDKs: `indexar`,
+`tem_indice`/`temIndice` and `chave`; a 15-line example in `sdk/<language>/exemplo.*`. The Python SDK does not have key lookup yet.
 
 ## Databases you already use
 

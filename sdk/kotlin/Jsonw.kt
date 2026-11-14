@@ -29,6 +29,8 @@ object Jsonw {
     private val ESQUEMA = fn("jsonw_esquema", FunctionDescriptor.of(P, P)); private val CAMPO_NOME = fn("jsonw_campo_nome", FunctionDescriptor.of(P, P, I32))
     private val LINHA_JSON = fn("jsonw_linha_json", FunctionDescriptor.of(SZ, P, U64, P, SZ)); private val LINHA_TEXTO = fn("jsonw_linha_texto", FunctionDescriptor.of(SZ, P, U64, P, SZ))
     private val CAMPO_JSON = fn("jsonw_campo_json", FunctionDescriptor.of(SZ, P, U64, I32, P, SZ)); private val CONFERIR = fn("jsonw_conferir", FunctionDescriptor.of(I32, P, P, SZ))
+    private val INDEXAR = fn("jsonw_indexar", FunctionDescriptor.of(I32, P, I32)); private val TEM_INDICE = fn("jsonw_tem_indice", FunctionDescriptor.of(I32, P, I32))
+    private val CHAVE = fn("jsonw_chave", FunctionDescriptor.of(SZ, P, I32, P, SZ, P, SZ))   /* BUSCAR POR CHAVE (1.3.13) */
     private val CRIAR = fn("jsonw_criar", FunctionDescriptor.of(P, P, P, P, SZ)); private val OPCOES = fn("jsonw_opcoes", FunctionDescriptor.of(I32, P, I32, I32, I32))
     private val GRAVAR = fn("jsonw_gravar_json", FunctionDescriptor.of(I32, P, P, SZ, P, SZ)); private val DESCARREGAR = fn("jsonw_descarregar", FunctionDescriptor.of(I32, P))
     private val FECHAR_W = fn("jsonw_fechar_escritor", FunctionDescriptor.of(I32, P)); private val ABANDONAR = fn("jsonw_abandonar", FunctionDescriptor.of(I32, P)); private val VERSAO = fn("jsonw_versao", FunctionDescriptor.of(P)); private val VISAO = fn("jsonw_visao", FunctionDescriptor.of(I32, P, P, P, SZ))
@@ -66,6 +68,18 @@ object Jsonw {
         fun json(i: Long): String = lerTexto { b, cap -> LINHA_JSON.invokeExact(a, i, b, cap) as Long }
         fun texto(i: Long): String = lerTexto { b, cap -> LINHA_TEXTO.invokeExact(a, i, b, cap) as Long }
         fun campo(i: Long, k: Int): String = lerTexto { b, cap -> CAMPO_JSON.invokeExact(a, i, k, b, cap) as Long }
+        /* BUSCAR POR CHAVE (1.3.13): as linhas em que o campo k vale o valor (o JSON do valor no tipo do campo), em ordem; com indexar(k), sem varrer */
+        fun indexar(k: Int) { if (INDEXAR.invokeExact(a, k) as Int != 0) throw RuntimeException("campo sem indice") }
+        fun temIndice(k: Int): Boolean = TEM_INDICE.invokeExact(a, k) as Int == 1
+        fun chave(k: Int, valor: String): LongArray = Arena.ofConfined().use { ar ->
+            val v = ar.allocateFrom(valor); var cap = 16L
+            while (true) {
+                val out = ar.allocate(ValueLayout.JAVA_LONG, cap); val n = CHAVE.invokeExact(a, k, v, v.byteSize() - 1, out, cap) as Long
+                if (n == -2L) throw RuntimeException("valor nao e do tipo do campo"); if (n < 0) throw RuntimeException("campo invalido")
+                if (n <= cap) return@use out.asSlice(0, n * 8).toArray(ValueLayout.JAVA_LONG); cap = n
+            }
+            throw IllegalStateException("inalcancavel")
+        }
         fun conferir() { Arena.ofConfined().use { ar -> val erro = ar.allocate(200); if ((CONFERIR.invokeExact(a, erro, 200L) as Int) != 0) throw RuntimeException(str(erro)) } }
         fun visao(escopos: String): Leitor {   /* trava o que a sessao ve ("pessoal vendas tenant:42"): esquema e campos so os visiveis; linha de outro tenant = LinhaOculta */
             Arena.ofConfined().use { ar -> val erro = ar.allocate(300); if ((VISAO.invokeExact(a, ar.allocateFrom(escopos), erro, 300L) as Int) != 0) throw RuntimeException(str(erro)) }

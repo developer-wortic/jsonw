@@ -38,6 +38,20 @@ public final class Leitor {
     public func texto(_ i: UInt64) throws -> String { try lerTexto { jsonw_linha_texto(a, i, $0, $1) } }
     public func campo(_ i: UInt64, _ k: Int) throws -> String { try lerTexto { jsonw_campo_json(a, i, Int32(k), $0, $1) } }
     public func conferir() throws { var erro = [CChar](repeating: 0, count: 200); if jsonw_conferir(a, &erro, 200) != 0 { throw erroDe(erro) } }
+    // BUSCAR POR CHAVE (1.3.13): as linhas em que o campo k vale o valor (o JSON do valor no tipo do campo: "7", "\"RJ\""), em ordem; com indexar(k), sem varrer
+    public func indexar(_ k: Int) throws { if jsonw_indexar(a, Int32(k)) != 0 { throw ErroJsonW(description: "campo sem indice") } }
+    public func temIndice(_ k: Int) -> Bool { jsonw_tem_indice(a, Int32(k)) == 1 }
+    public func chave(_ k: Int, _ valor: String) throws -> [UInt64] {
+        var cap = 16
+        while true {
+            var out = [UInt64](repeating: 0, count: cap)
+            let n = valor.withCString { v in jsonw_chave(a, Int32(k), v, strlen(v), &out, cap) }
+            if n == -2 { throw ErroJsonW(description: "valor nao e do tipo do campo") }
+            if n < 0 { throw ErroJsonW(description: "campo invalido") }
+            if Int(n) <= cap { return Array(out.prefix(Int(n))) }
+            cap = Int(n)
+        }
+    }
     // visao (1.2): trava o que a sessao ve ("pessoal vendas tenant:42"): esquema e campos so os visiveis; linha de outro tenant = LinhaOculta
     public func visao(_ escopos: String) throws {
         var erro = [CChar](repeating: 0, count: 300); if jsonw_visao(a, escopos, &erro, 300) != 0 { throw erroDe(erro) }
