@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="version" src="https://img.shields.io/badge/version-1.3.11-1d1d1f?style=flat-square">
+  <img alt="version" src="https://img.shields.io/badge/version-1.3.12-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-10%20languages-2ac2f3?style=flat-square">
   <img alt="core" src="https://img.shields.io/badge/core-C%2C%20zero%20deps-1d1d1f?style=flat-square">
