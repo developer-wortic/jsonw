@@ -31,6 +31,12 @@ export class Leitor implements Iterable<Linha> {
   avaliarJson(pedido: string | object, k?: number): string;
   /** Pedido de nota; devolve as k melhores. */
   avaliar(pedido: string | object, k?: number): Nota[];
+  /** Monta o índice do campo neste leitor (1.3.13): a busca por chave deixa de varrer o arquivo. */
+  indexar(campo: string | number): this;
+  /** true quando o campo tem índice neste leitor. */
+  temIndice(campo: string | number): boolean;
+  /** As linhas em que o campo vale o valor, em ordem (com índice, sem varrer). */
+  chave(campo: string | number, valor: unknown): number[];
   [Symbol.iterator](): Iterator<Linha>;
   fechar(): void;
 }
