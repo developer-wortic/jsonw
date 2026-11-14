@@ -29,7 +29,7 @@ npm install @wortictecnologia/jsonw
 
 Prebuilt for **macOS arm64** and **Linux x64** (glibc 2.34+: Ubuntu 22.04+, Debian 12+, RHEL 9+); nothing to compile. The
 `jsonw` command also ships for **Windows x64**. Works with `import` and `require`, in Next.js, Remix, Astro, Nuxt, SvelteKit,
-NestJS, Express and any Node.js 18+ server.
+NestJS, Express and any Node.js 22.12+ server.
 
 ## Use
 

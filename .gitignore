@@ -5,3 +5,5 @@ sdk/go/ler
 sdk/rust/target/
 sdk/rust/Cargo.lock
 *.jsw
+__pycache__/
+*.pyc
