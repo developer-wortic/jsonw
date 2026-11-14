@@ -495,6 +495,15 @@ escopo, a coluna `+pessoal`/`+escopo(x)` não sai, nem por `campos=` nem por `on
 | macOS arm64 | `wjsw`, `wjsw-cgi`, `wcon`, `wremoto`, `libjsonw.a`, `libjsonw.dylib`, `jsonw.node` |
 | Linux x86_64 (glibc 2.34+: Ubuntu 22.04+, Debian 12+, RHEL 9+) | `wjsw`, `wjsw-cgi`, `wcon`, `wremoto`, `libjsonw.a`, `libjsonw.so`, `jsonw.node` |
 | Windows x86_64 | `wjsw.exe`, `wjsw-cgi.exe`, `libjsonw.dll`, `libjsonw.a` |
+| Linux ARM64 | `wjsw`, `wjsw-cgi`, `libjsonw.a`, `libjsonw.so` |
+
+### Versões: quem lê o quê
+
+- **A 1.3 lê todo arquivo `.jsw` gravado por qualquer versão anterior.** Nada precisa ser regravado.
+- **Arquivo gravado pela 1.3 pede leitor 1.3 ou mais novo.** A 1.3 compacta melhor os blocos; um leitor 1.2 abre o
+  cabeçalho, confere a custódia e avisa `linha ilegivel` ao ler os dados.
+- **Atualize o leitor junto com quem grava:** `npm install @wortictecnologia/jsonw@latest`, ou os binários de `bin/` em
+  cada máquina que lê o arquivo, inclusive os programas ligados à `libjsonw`.
 
 Outra plataforma ou um acordo comercial: [wortic.com.br](https://wortic.com.br).
 
