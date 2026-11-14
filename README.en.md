@@ -236,7 +236,15 @@ because only it knows what the session may see: a file with no marked column and
 
 macOS arm64 · Linux x86_64 · Windows x86_64 (`wjsw`, `wjsw-cgi`, `libjsonw` static and shared, Node addon on macOS and Linux).
 Database connectors `wcon` and `wremoto`: macOS arm64 and Linux x86_64. Linux binaries need glibc 2.34+ (Ubuntu 22.04+,
-Debian 12+, RHEL 9+).
+Debian 12+, RHEL 9+). Linux ARM64: `wjsw`, `wjsw-cgi` and `libjsonw` static and shared.
+
+### Versions: who reads what
+
+- **1.3 reads every `.jsw` file written by any earlier version.** Nothing needs to be rewritten.
+- **A file written by 1.3 needs a 1.3 reader or newer.** 1.3 packs blocks tighter; a 1.2 reader opens the header, verifies
+  custody and reports `linha ilegivel` ("unreadable row") when it reads the data.
+- **Upgrade the reader together with the writer:** `npm install @wortictecnologia/jsonw@latest`, or the binaries in
+  `bin/` on every machine that reads the file, including programs linked against `libjsonw`.
 
 ## Post-quantum ready
 
