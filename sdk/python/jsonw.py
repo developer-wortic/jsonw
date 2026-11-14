@@ -39,7 +39,8 @@ _l = _carregar()
 _P, _S, _I, _U, _L, _C = ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_uint64, ctypes.c_int64, ctypes.c_char_p   # _L: int64_t na ABI (o mesmo tamanho em todo sistema)
 for _n, _r, _a in [("versao", _C, []), ("abrir", _P, [_C, _C, _S]), ("fechar", None, [_P]), ("linhas", _U, [_P]), ("campos", _I, [_P]), ("esquema", _C, [_P]), ("campo_nome", _C, [_P, _I]),
                    ("linha_json", _L, [_P, _U, _C, _S]), ("linha_texto", _L, [_P, _U, _C, _S]), ("campo_json", _L, [_P, _U, _I, _C, _S]), ("conferir", _I, [_P, _C, _S]), ("criar", _P, [_C, _C, _C, _S]),
-                   ("opcoes", _I, [_P, _I, _I, _I]), ("gravar_json", _I, [_P, _C, _S, _C, _S]), ("descarregar", _I, [_P]), ("fechar_escritor", _I, [_P]), ("abandonar", _I, [_P]), ("visao", _I, [_P, _C, _C, _S])]:
+                   ("opcoes", _I, [_P, _I, _I, _I]), ("gravar_json", _I, [_P, _C, _S, _C, _S]), ("descarregar", _I, [_P]), ("fechar_escritor", _I, [_P]), ("abandonar", _I, [_P]), ("visao", _I, [_P, _C, _C, _S]),
+                   ("indexar", _I, [_P, _I]), ("tem_indice", _I, [_P, _I]), ("chave", _L, [_P, _I, _C, _S, ctypes.POINTER(_U), _S])]:
     _f = getattr(_l, "jsonw_" + _n); _f.restype = _r; _f.argtypes = _a
 versao = _l.jsonw_versao().decode()
 
@@ -75,6 +76,20 @@ class Leitor:
     def campo(self, i, campo):
         k = campo if isinstance(campo, int) else self.campos.index(campo)
         return json.loads(_texto(_l.jsonw_campo_json, self._a, i, k))
+    def indexar(self, campo):   # BUSCAR POR CHAVE (1.3.13): monta o indice do campo; a busca nao varre o arquivo
+        if _l.jsonw_indexar(self._a, self._k(campo)): raise ErroJsonW("campo sem indice")
+        return self
+    def tem_indice(self, campo): return _l.jsonw_tem_indice(self._a, self._k(campo)) == 1
+    def chave(self, campo, valor):
+        """As linhas em que o campo vale o valor (valor em Python: 7, "RJ", None), em ordem crescente."""
+        v = json.dumps(valor, ensure_ascii=False).encode(); k = self._k(campo); cap = 16
+        while True:
+            out = (ctypes.c_uint64 * cap)(); n = _l.jsonw_chave(self._a, k, v, len(v), out, cap)
+            if n == -2: raise ErroJsonW("valor nao e do tipo do campo")
+            if n < 0: raise ErroJsonW("campo invalido")
+            if n <= cap: return [int(out[i]) for i in range(n)]
+            cap = n
+    def _k(self, campo): return campo if isinstance(campo, int) else (self.campos.index(campo) if campo in self.campos else -1)
     def conferir(self):
         e = ctypes.create_string_buffer(200)
         if _l.jsonw_conferir(self._a, e, 200): raise ErroJsonW(e.value.decode())

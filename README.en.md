@@ -200,7 +200,7 @@ with jsonw.Leitor("companies.jsw") as a:
 ```
 
 ABI: `jsonw_indexar(a, field)`, `jsonw_tem_indice(a, field)` and `jsonw_chave(a, field, value, n, rows, max)`. SDKs: `indexar`,
-`tem_indice`/`temIndice` and `chave`; a 15-line example in `sdk/<language>/exemplo.*`. The Python SDK does not have key lookup yet.
+`tem_indice`/`temIndice` and `chave`; a 15-line example in `sdk/<language>/exemplo.*`.
 
 ## Databases you already use
 

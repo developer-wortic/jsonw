@@ -411,7 +411,7 @@ with jsonw.Leitor("empresas.jsw") as a:
 ```
 
 Na ABI: `jsonw_indexar(a, campo)`, `jsonw_tem_indice(a, campo)` e `jsonw_chave(a, campo, valor, n, linhas, max)`. Nos SDKs:
-`indexar`, `tem_indice`/`temIndice` e `chave`; exemplo de 15 linhas em `sdk/<linguagem>/exemplo.*`. O SDK Python ainda não tem a busca por chave.
+`indexar`, `tem_indice`/`temIndice` e `chave`; exemplo de 15 linhas em `sdk/<linguagem>/exemplo.*`.
 
 ## Com os bancos que você já tem
 

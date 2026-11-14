@@ -30,6 +30,7 @@ cc -std=c11 -O2 -I. c/exemplo.c libjsonw.a -lm -o $T/c && c C $T/c
 c++ -std=c++17 -O2 -I. -Icpp cpp/exemplo.cpp libjsonw.a -lm -o $T/cpp && c C++ $T/cpp
 if command -v node >/dev/null; then NH=$(dirname $(dirname $(command -v node)))/include/node; cc -std=c11 -O2 -fPIC -shared -undefined dynamic_lookup -I"$NH" node/jsonw_node*.c libjsonw.a -lm -o node/jsonw.node 2>/dev/null || cc -std=c11 -O2 -fPIC -shared -I"$NH" node/jsonw_node*.c libjsonw.a -lm -o node/jsonw.node; c Node node node/exemplo.js; else pulados="$pulados node"; fi
 if command -v php >/dev/null && php -r 'exit(extension_loaded("FFI")?0:1);'; then c PHP php php/exemplo.php; else pulados="$pulados php"; fi
+if command -v python3 >/dev/null; then c Python python3 -I python/exemplo.py; else pulados="$pulados python"; fi
 if command -v ruby >/dev/null; then c Ruby ruby ruby/exemplo.rb; else pulados="$pulados ruby"; fi
 if command -v go >/dev/null; then (cd go && go build -o $T/go ./cmd/exemplo 2>$T/go.b.err) && c Go $T/go || { echo "  FALHOU Go (build)"; head -3 $T/go.b.err; falhas=$((falhas+1)); }; else pulados="$pulados go"; fi
 if command -v cargo >/dev/null; then (cd rust && cargo build --release --example exemplo -q 2>$T/rs.b.err) && c Rust rust/target/release/examples/exemplo || { echo "  FALHOU Rust (build)"; head -3 $T/rs.b.err; falhas=$((falhas+1)); }; else pulados="$pulados rust"; fi
