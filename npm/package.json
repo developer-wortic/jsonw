@@ -8,6 +8,12 @@
       "types": "./index.d.ts",
       "default": "./index.js"
     },
+    "./wasm": {
+      "types": "./wasm/jsonw.d.ts",
+      "node": "./wasm/jsonw-node.js",
+      "default": "./wasm/jsonw.js"
+    },
+    "./wasm/jsonw.wasm": "./wasm/jsonw.wasm",
     "./package.json": "./package.json"
   },
   "main": "./index.js",
@@ -21,6 +27,7 @@
     "index.d.ts",
     "bin/",
     "prebuilt/",
+    "wasm/",
     "LICENCA.md",
     "README.md"
   ],

@@ -23,6 +23,7 @@ JSONW_API const char *jsonw_versao(void);
 
 /* ler */
 JSONW_API void *jsonw_abrir(const char *caminho, char *erro, size_t nerro);          /* mmap; NULL se nao abriu */
+JSONW_API void *jsonw_abrir_memoria(const void *bytes, size_t n, char *erro, size_t nerro);   /* 1.3.14: copia os bytes; sem arquivo */
 JSONW_API void jsonw_fechar(void *a);
 JSONW_API uint64_t jsonw_linhas(const void *a);
 JSONW_API int jsonw_campos(const void *a);

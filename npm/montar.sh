@@ -8,6 +8,7 @@ rm -rf "$SAI"; mkdir -p "$SAI/bin" "$SAI/prebuilt/darwin-arm64" "$SAI/prebuilt/l
 cp "$RAIZ/npm/package.json" "$RAIZ/npm/README.md" "$RAIZ/npm/index.d.ts" "$SAI/"
 cp "$RAIZ/npm/bin/jsonw.js" "$SAI/bin/"; chmod +x "$SAI/bin/jsonw.js"
 cp "$RAIZ/sdk/node/index.js" "$SAI/index.js"; cp "$RAIZ/LICENCA.md" "$SAI/"
+mkdir -p "$SAI/wasm" && cp "$RAIZ"/sdk/wasm/{jsonw.js,jsonw-node.js,jsonw.d.ts,jsonw.wasm} "$SAI/wasm/"
 cp "$RAIZ/bin/macos-arm64/jsonw.node" "$RAIZ/bin/macos-arm64/wjsw" "$SAI/prebuilt/darwin-arm64/"
 cp "$RAIZ/bin/linux-x86_64/jsonw.node" "$RAIZ/bin/linux-x86_64/wjsw" "$SAI/prebuilt/linux-x64/"
 cp "$RAIZ/bin/windows-x86_64/wjsw.exe" "$SAI/prebuilt/win32-x64/"

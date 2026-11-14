@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./jsonw.d.ts",
+      "node": "./jsonw-node.js",
+      "default": "./jsonw.js"
+    },
+    "./jsonw.wasm": "./jsonw.wasm"
+  }
+}
