@@ -407,9 +407,11 @@ Machine-readable metadata: [`CITATION.cff`](CITATION.cff).
 
 ## Post-quantum ready
 
-The remote reader (`wremoto`) talks HTTPS over TLS 1.3 with OpenSSL 4, whose default key exchange is the hybrid
-**X25519MLKEM768** (NIST ML-KEM, FIPS 203); against jsonw.org and the Wortic edge it negotiates exactly that (measured
-15/11/2026). Any server that offers only classic X25519 still works. Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
+The jsonW wire protocol (jsonW-fio) runs over QUIC (MsQuic, TLS 1.3) with the hybrid **X25519MLKEM768** post-quantum key
+exchange (NIST ML-KEM, FIPS 203) in the Wortic inference server: one QUIC stream per jsonW flow, no head-of-line blocking.
+The remote reader in this package (`wremoto`) uses HTTPS over TLS 1.3 with OpenSSL 4, whose default key exchange is the same
+hybrid; against jsonw.org it negotiates X25519MLKEM768 (measured 15/11/2026), and servers that offer only classic X25519
+still work. Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
 
 ## What's new in 1.4.1
 

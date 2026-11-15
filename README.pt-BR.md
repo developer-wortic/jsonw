@@ -569,9 +569,11 @@ linguagem, no padrão llms.txt. O mesmo `llms.txt` está em [jsonw.org/llms.txt]
 
 ## Pronto para a computação quântica
 
-- **Transmissão:** a leitura remota (`wremoto`) fala HTTPS com TLS 1.3 pelo OpenSSL 4, cuja troca de chaves padrão é a
-  híbrida pós-quântica **X25519MLKEM768** (o ML-KEM do NIST, FIPS 203); contra o jsonw.org e a borda da Wortic ela negocia
-  exatamente essa (medido em 15/11/2026), e servidor que só oferece o X25519 clássico continua funcionando.
+- **Transmissão:** o fio do jsonW (jsonW-fio) corre sobre QUIC (MsQuic, TLS 1.3) com a troca de chaves híbrida
+  pós-quântica **X25519MLKEM768** (o ML-KEM do NIST, FIPS 203) no servidor de inferência da Wortic, um stream QUIC por fluxo,
+  sem bloqueio de cabeça de fila. A leitura remota deste pacote (`wremoto`) vai por HTTPS com TLS 1.3 pelo OpenSSL 4, cuja
+  troca padrão é a mesma híbrida: contra o jsonw.org ela negocia X25519MLKEM768 (medido em 15/11/2026), e servidor que só
+  oferece o X25519 clássico continua funcionando.
 - **Custódia e credencial:** só hash e HMAC de 256 bits, que seguem seguros contra o computador quântico.
 - **Mídia gerada por IA:** tensores `bf16`/`f16`, progresso enquanto gera, e áudio, imagem e vídeo em pedaços com 0,04% de envelope.
 
