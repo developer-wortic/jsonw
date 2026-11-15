@@ -1,0 +1,7 @@
+// ap2.jsw.txt: o perfil jsonW do AP2 (Agent Payments Protocol), mandatos v1 (vct mandate.checkout.1 e mandate.payment.1), tirados
+// dos modelos gerados do SDK oficial (github.com/google-agentic-commerce/AP2, code/sdk/python/ap2/sdk/generated, lido em
+// 14/11/2026). O mandato é uma credencial SD-JWT; aqui fica o conteúdo dele. O valor é inteiro em unidades menores (ISO 4217:
+// 27999 = 279,99), como a spec manda. payee, pisp e payment_instrument são objetos de outros arquivos da spec: "qualquer" nesta leva.
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"ap2",versao:"mandate.1",objeto:"CheckoutMandate",esquema:"vct:dic,checkout_jwt:texto,checkout_hash:codigo,iat:i64?,exp:i64?",fonte:"https://github.com/google-agentic-commerce/AP2/blob/main/code/sdk/python/ap2/sdk/generated/checkout_mandate.py"}
+{protocolo:"ap2",versao:"mandate.1",objeto:"PaymentMandate",esquema:"vct:dic,transaction_id:codigo,payee:qualquer,pisp:qualquer?,payment_amount:obj{amount:i64,currency:dic},payment_instrument:qualquer,execution_date:texto?,risk_data:qualquer?,iat:i64?,exp:i64?",fonte:"https://github.com/google-agentic-commerce/AP2/blob/main/code/sdk/python/ap2/sdk/generated/payment_mandate.py"}

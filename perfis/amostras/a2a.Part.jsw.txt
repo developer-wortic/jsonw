@@ -1,0 +1,3 @@
+// borda-json: as Parts da Message do A2A (amostras/a2a.Message), uma por linha; a prova grava em jsonW e confere a volta
+{"text":"Quais empresas de padaria em Porto Alegre abriram este mês?","raw":null,"url":null,"data":null,"metadata":null,"filename":null,"mediaType":"text/plain"}
+{"text":null,"raw":null,"url":null,"data":{"total":12,"uf":"RS"},"metadata":{"fonte":"Receita Federal"},"filename":null,"mediaType":"application/json"}

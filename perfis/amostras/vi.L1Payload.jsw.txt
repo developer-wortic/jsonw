@@ -1,0 +1,2 @@
+// borda-json: exemplo oficial do Verifiable Intent (spec/credential-format.md), decodificado e compactado; a prova grava em jsonW e confere a volta
+{"iss":"https://issuer.mastercard.com","sub":"user-8a3f9c21","iat":1700000000,"exp":1731536000,"vct":"https://credentials.mastercard.com/card","cnf":{"jwk":{"kty":"EC","crv":"P-256","x":"f83OJ3D2xF1Bg8vub9tLe1gHMzV76e8Tus9uPHvRVEU","y":"x_FEzRu9m36HLN_tue659LNpXW6pCyStikYjKIWI5a0"}},"pan_last_four":"1234","scheme":"mastercard","card_id":"card-mc-8842","_sd_alg":"sha-256","_sd":["<hash-of-email-disclosure>"]}

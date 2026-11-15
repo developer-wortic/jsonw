@@ -607,7 +607,7 @@ Um valor inválido para o tipo é recusado com erro (`valor 1 nao coube no esque
 A pasta `perfis/` tem um arquivo `.jsw.txt` por protocolo de comércio e comunicação com agentes, com o esquema jsonW de cada objeto. Cada objeto tem uma amostra gravada e conferida. Para provar tudo de novo:
 
 ```text
-$ bash perfis/provar-perfis.sh bin/wjsw
+$ bash perfis/provar-perfis.sh bin/linux-x86_64/wjsw   (ou bin/macos-arm64/wjsw)
 perfis: 49 ok, 0 falhas
 ```
 

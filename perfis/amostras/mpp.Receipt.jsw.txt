@@ -1,0 +1,2 @@
+// borda-json: MPP (draft-httpauth-payment-01) decodificado como o cliente de fora manda e recebe; a prova grava em jsonW e confere a volta
+{"status":"success","method":"tempo","timestamp":"2026-11-14T22:05:12Z","reference":"0x8f3d5e1a9c2b4d6f"}

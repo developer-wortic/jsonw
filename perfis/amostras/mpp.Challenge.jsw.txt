@@ -1,0 +1,2 @@
+// borda-json: MPP (draft-httpauth-payment-01) decodificado como o cliente de fora manda e recebe; a prova grava em jsonW e confere a volta
+{"id":"chl_7f3a","realm":"cnpj.wortic.com","method":"tempo","intent":"charge","request":"eyJhbW91bnQiOiIxMDAwMCIsImN1cnJlbmN5IjoidXNkIn0","digest":null,"expires":"2026-11-14T22:10:00Z","description":"Avaliação de empresas acima do limite grátis","header":null,"opaque":null}

@@ -1,0 +1,2 @@
+// borda-json: o exemplo oficial do Bacen (openapi.yaml, components/examples) como o PSP o manda; a prova grava em jsonW e confere a volta
+{"endToEndId":"E12345678202009091221kkkkkkkkkkk","txid":"c3e0e7a4e7f1469a9f782d3d4999343c","valor":"110.00","horario":"2020-09-09T20:15:00.358Z","infoPagador":"0123456789","devolucoes":{"id":"123ABC","rtrId":"D12345678202009091221abcdf098765","valor":"10.00","horario":{"solicitacao":"2020-09-09T20:15:00.358Z"},"status":"EM_PROCESSAMENTO"}}

@@ -1,0 +1,6 @@
+// acp.jsw.txt: o perfil jsonW do ACP (Agentic Commerce Protocol, OpenAI e Stripe) 2026-04-17, tirado do exemplo oficial
+// examples/2026-04-17/examples.agentic_checkout.json do repositório agentic-commerce-protocol/agentic-commerce-protocol (lido em
+// 14/11/2026). A sessão de checkout tipada no primeiro nível, totais e links; "capabilities", itens e entrega, cuja forma muda por
+// lojista e extensão, ficam "qualquer" nesta leva. Valores em unidades menores da moeda (300 = 3,00).
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"acp",versao:"2026-04-17",objeto:"CheckoutSession",esquema:"id:codigo,protocol:obj{version:dic},capabilities:qualquer,status:dic,currency:dic,line_items:lista<qualquer>,fulfillment_details:qualquer,selected_fulfillment_options:lista<qualquer>,totals:lista<obj{type:dic,display_text:texto,amount:i64,description:texto?}>,fulfillment_options:lista<qualquer>,marketing_consent_options:lista<qualquer>,messages:lista<qualquer>,links:lista<obj{type:dic,url:url}>",fonte:"https://github.com/agentic-commerce-protocol/agentic-commerce-protocol/blob/main/examples/2026-04-17/examples.agentic_checkout.json"}

@@ -1,0 +1,7 @@
+// l402.jsw.txt: o perfil jsonW do L402 (antigo LSAT), tirado de protocol-specification.md do repositório lightninglabs/L402 (lido em
+// 14/11/2026). Só cabeçalhos: WWW-Authenticate: L402 macaroon="<base64>", invoice="<bolt11>" e Authorization: L402
+// <base64(macaroon)>:<hex(preimage)>. O esquema guarda as partes já separadas; "esquema_http" diz se veio como L402 ou LSAT (os dois
+// valem no Authorization).
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"l402",versao:"1",objeto:"Challenge",esquema:"esquema_http:dic,macaroon:codigo,invoice:codigo",fonte:"https://github.com/lightninglabs/L402/blob/master/protocol-specification.md"}
+{protocolo:"l402",versao:"1",objeto:"Credential",esquema:"esquema_http:dic,macaroon:codigo,preimage:codigo",fonte:"https://github.com/lightninglabs/L402/blob/master/protocol-specification.md"}

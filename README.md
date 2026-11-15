@@ -443,7 +443,7 @@ An invalid value for the type is refused with an error (`valor 1 nao coube no es
 The `perfis/` folder has one `.jsw.txt` file per commerce and agent protocol, with the jsonW schema of each object. Each object has a recorded sample that is checked. To prove everything again:
 
 ```text
-$ bash perfis/provar-perfis.sh bin/wjsw
+$ bash perfis/provar-perfis.sh bin/linux-x86_64/wjsw   (or bin/macos-arm64/wjsw)
 perfis: 49 ok, 0 falhas
 ```
 
