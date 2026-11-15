@@ -321,6 +321,7 @@ Debian 12+, RHEL 9+). Linux ARM64: `wjsw`, `wjsw-cgi` and `libjsonw` static and 
 - **1.3 reads every `.jsw` file written by any earlier version.** Nothing needs to be rewritten.
 - **A file written by 1.3 needs a 1.3 reader or newer.** 1.3 packs blocks tighter; a 1.2 reader opens the header, verifies
   custody and reports `linha ilegivel` ("unreadable row") when it reads the data.
+- **1.4.0 adds encryption at rest.** A file written by 1.4.0 without encryption is byte for byte the same as 1.3.14 and is read by 1.3.14 and 1.2.1. An encrypted file needs 1.4.0 and the key; older readers refuse it with `versao do jsonW desconhecida`.
 - **Upgrade the reader together with the writer:** `npm install @wortictecnologia/jsonw@latest`, or the binaries in
   `bin/` on every machine that reads the file, including programs linked against `libjsonw`.
 
@@ -408,6 +409,57 @@ Machine-readable metadata: [`CITATION.cff`](CITATION.cff).
 
 jsonW's wire protocol runs over QUIC with TLS 1.3 and the **X25519MLKEM768** post-quantum key exchange (NIST ML-KEM,
 FIPS 203). Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
+
+## What's new in 1.4.0
+
+### How do I encrypt a jsonW file at rest?
+From 1.4.0 a `.jsw` file can stay encrypted on disk (XChaCha20-Poly1305). The tenant key stays outside the file: a file with 64 hex characters, pointed to by `WJSW_CHAVE_ARQ` or the `--chave` option. Measured with 1.4.0:
+
+```text
+$ wjsw cifrar cifrado.jsw --chave chave.hex
+$ wjsw conferir cifrado.jsw
+FALHOU: arquivo cifrado: falta a chave do tenant (WJSW_CHAVE_ARQ ou credencial wjsw-chave)
+$ wjsw para-texto cifrado.jsw --chave chave.hex
+{id:1,cpf:"12345678909",cnpj:"11222333000181"}
+{id:2,cpf:"12345678909",cnpj:"11222333000181"}
+```
+
+Older readers (1.3.14 and 1.2.1) refuse the encrypted file with `versao do jsonW desconhecida` instead of reading the ciphertext as data. In the compatibility test, a file written by 1.4.0 without encryption came out byte for byte equal to the one written by 1.3.14 with the same data.
+
+### Documents from many countries: CPF, CNPJ, IBAN and more, with masks
+In the `mascara(tipo)` column jsonW accepts the document with or without punctuation, stores the canonical form and refuses invalid values. Measured example:
+
+```text
+$ wjsw de-texto 'id:i64,cpf:mascara(cpf),cnpj:mascara(cnpj)' clientes.jsw.txt docs.jsw
+2 linhas -> docs.jsw
+$ wjsw para-texto docs.jsw
+{id:1,cpf:"12345678909",cnpj:"11222333000181"}
+{id:2,cpf:"12345678909",cnpj:"11222333000181"}
+```
+
+An invalid value for the type is refused with an error (`valor 1 nao coube no esquema`, exit code 1). The list of types is in `mascara/wmascara.h`: among them CPF, CNPJ, CEP, phone, PIS, RENAVAM, IBAN, Portuguese NIF, French SIREN and SIRET, US EIN and SSN, Mexican CURP and RFC, Chilean RUT and Italian partita IVA.
+
+### jsonW profiles for A2A, UCP, ACP, AP2, Verifiable Intent, x402, MPP, AG-UI and OpenTelemetry
+The `perfis/` folder has one `.jsw.txt` file per commerce and agent protocol, with the jsonW schema of each object. Each object has a recorded sample that is checked. To prove everything again:
+
+```text
+$ bash perfis/provar-perfis.sh bin/wjsw
+perfis: 49 ok, 0 falhas
+```
+
+| Protocol | Profile | Objects with a sample |
+|---|---|---|
+| A2A (agent-to-agent communication) | `a2a.jsw.txt` | AgentCard, Artifact, Message, Part, Task |
+| UCP (commerce) | `ucp.jsw.txt` | Cart, Checkout, Order, Profile |
+| ACP (agent checkout) | `acp.jsw.txt` | CheckoutSession |
+| AP2 (payment mandates) | `ap2.jsw.txt` | CheckoutMandate, PaymentMandate |
+| Verifiable Intent | `vi.jsw.txt` | CheckoutMandate, L1Payload, L2Payload, PaymentMandate |
+| x402 (payment over HTTP 402) | `x402.jsw.txt` | PaymentPayload, PaymentRequired, PaymentRequirements, SettlementResponse |
+| MPP | `mpp.jsw.txt` | Challenge, Credential, Receipt |
+| AG-UI (agent user interface) | `agui.jsw.txt` | 13 events, from RunStarted to Custom |
+| OpenTelemetry | `otel.jsw.txt` | Span, TracesData |
+
+The folder also has `l402.jsw.txt` and `pix.jsw.txt`, which the proof counts in the 49 objects.
 
 ## License and transparency
 

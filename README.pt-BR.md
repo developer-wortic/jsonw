@@ -555,6 +555,7 @@ escopo, a coluna `+pessoal`/`+escopo(x)` não sai, nem por `campos=` nem por `on
 - **A 1.3 lê todo arquivo `.jsw` gravado por qualquer versão anterior.** Nada precisa ser regravado.
 - **Arquivo gravado pela 1.3 pede leitor 1.3 ou mais novo.** A 1.3 compacta melhor os blocos; um leitor 1.2 abre o
   cabeçalho, confere a custódia e avisa `linha ilegivel` ao ler os dados.
+- **A 1.4.0 traz a cifra em repouso.** Arquivo gravado pela 1.4.0 sem cifra sai byte a byte igual ao da 1.3.14 e é lido pela 1.3.14 e pela 1.2.1. Arquivo cifrado pede a 1.4.0 e a chave; os leitores antigos recusam com `versao do jsonW desconhecida`.
 - **Atualize o leitor junto com quem grava:** `npm install @wortictecnologia/jsonw@latest`, ou os binários de `bin/` em
   cada máquina que lê o arquivo, inclusive os programas ligados à `libjsonw`.
 
@@ -572,6 +573,57 @@ linguagem, no padrão llms.txt. O mesmo `llms.txt` está em [jsonw.org/llms.txt]
   NIST, FIPS 203), com vários fluxos numa conexão, crédito e retomada.
 - **Custódia e credencial:** só hash e HMAC de 256 bits, que seguem seguros contra o computador quântico.
 - **Mídia gerada por IA:** tensores `bf16`/`f16`, progresso enquanto gera, e áudio, imagem e vídeo em pedaços com 0,04% de envelope.
+
+## Novidades da 1.4.0
+
+### Como cifrar um arquivo jsonW em repouso?
+A partir da 1.4.0, o arquivo `.jsw` pode ficar cifrado no disco (XChaCha20-Poly1305). A chave do tenant fica fora do arquivo: um arquivo com 64 caracteres hexadecimais, apontado por `WJSW_CHAVE_ARQ` ou pela opção `--chave`. Exemplo medido com a 1.4.0:
+
+```text
+$ wjsw cifrar cifrado.jsw --chave chave.hex
+$ wjsw conferir cifrado.jsw
+FALHOU: arquivo cifrado: falta a chave do tenant (WJSW_CHAVE_ARQ ou credencial wjsw-chave)
+$ wjsw para-texto cifrado.jsw --chave chave.hex
+{id:1,cpf:"12345678909",cnpj:"11222333000181"}
+{id:2,cpf:"12345678909",cnpj:"11222333000181"}
+```
+
+Leitores antigos (1.3.14 e 1.2.1) recusam o arquivo cifrado com `versao do jsonW desconhecida`, em vez de ler o texto cifrado como se fosse dado. No teste de compatibilidade, um arquivo gravado pela 1.4.0 sem cifra saiu igual, byte a byte, ao gravado pela 1.3.14 com os mesmos dados.
+
+### Documentos de vários países: CPF, CNPJ, IBAN e outros, com máscara
+Na coluna `mascara(tipo)` o jsonW aceita o documento com ou sem pontuação, grava a forma canônica e recusa o que não é válido. Exemplo medido:
+
+```text
+$ wjsw de-texto 'id:i64,cpf:mascara(cpf),cnpj:mascara(cnpj)' clientes.jsw.txt docs.jsw
+2 linhas -> docs.jsw
+$ wjsw para-texto docs.jsw
+{id:1,cpf:"12345678909",cnpj:"11222333000181"}
+{id:2,cpf:"12345678909",cnpj:"11222333000181"}
+```
+
+Um valor inválido para o tipo é recusado com erro (`valor 1 nao coube no esquema`, código 1). A lista de tipos está em `mascara/wmascara.h`: entre eles CPF, CNPJ, CEP, telefone, PIS, RENAVAM, IBAN, NIF de Portugal, SIREN e SIRET da França, EIN e SSN dos Estados Unidos, CURP e RFC do México, RUT do Chile e partita IVA da Itália.
+
+### Perfis jsonW do A2A, UCP, ACP, AP2, Verifiable Intent, x402, MPP, AG-UI e OpenTelemetry
+A pasta `perfis/` tem um arquivo `.jsw.txt` por protocolo de comércio e comunicação com agentes, com o esquema jsonW de cada objeto. Cada objeto tem uma amostra gravada e conferida. Para provar tudo de novo:
+
+```text
+$ bash perfis/provar-perfis.sh bin/wjsw
+perfis: 49 ok, 0 falhas
+```
+
+| Protocolo | Perfil | Objetos com amostra |
+|---|---|---|
+| A2A (comunicação entre agentes) | `a2a.jsw.txt` | AgentCard, Artifact, Message, Part, Task |
+| UCP (comércio) | `ucp.jsw.txt` | Cart, Checkout, Order, Profile |
+| ACP (checkout com agentes) | `acp.jsw.txt` | CheckoutSession |
+| AP2 (mandatos de pagamento) | `ap2.jsw.txt` | CheckoutMandate, PaymentMandate |
+| Verifiable Intent | `vi.jsw.txt` | CheckoutMandate, L1Payload, L2Payload, PaymentMandate |
+| x402 (pagamento por HTTP 402) | `x402.jsw.txt` | PaymentPayload, PaymentRequired, PaymentRequirements, SettlementResponse |
+| MPP | `mpp.jsw.txt` | Challenge, Credential, Receipt |
+| AG-UI (interface de agentes) | `agui.jsw.txt` | 13 eventos, de RunStarted a Custom |
+| OpenTelemetry | `otel.jsw.txt` | Span, TracesData |
+
+A pasta também tem os perfis `l402.jsw.txt` e `pix.jsw.txt`, que a prova conta nos 49 objetos.
 
 ## Licença e transparência
 
