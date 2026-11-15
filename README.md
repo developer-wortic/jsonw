@@ -407,8 +407,9 @@ Machine-readable metadata: [`CITATION.cff`](CITATION.cff).
 
 ## Post-quantum ready
 
-jsonW's wire protocol runs over QUIC with TLS 1.3 and the **X25519MLKEM768** post-quantum key exchange (NIST ML-KEM,
-FIPS 203). Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
+The remote reader (`wremoto`) talks HTTPS over TLS 1.3 with OpenSSL 4, whose default key exchange is the hybrid
+**X25519MLKEM768** (NIST ML-KEM, FIPS 203); against jsonw.org and the Wortic edge it negotiates exactly that (measured
+15/11/2026). Any server that offers only classic X25519 still works. Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
 
 ## What's new in 1.4.1
 

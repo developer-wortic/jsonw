@@ -34,7 +34,7 @@
   returns the top k rows by cosine, combinable with term search and filters.
 - Permissions inside the format: signed credential (HMAC-SHA256, constant-time, nonce + sequence), column scopes
   (`+escopo(x)`, `+pessoal`), row isolation by integer `tenant`, cell = both. Hidden data never leaves the server.
-- Post-quantum: wire protocol over QUIC + TLS 1.3 with X25519MLKEM768; custody and credentials use 256-bit hashes/HMAC.
+- Post-quantum: remote reads over HTTPS + TLS 1.3 (OpenSSL 4, hybrid X25519MLKEM768 by default); custody and credentials use 256-bit hashes/HMAC.
 - The schema and CLI use Portuguese words: texto (text), dinheiro (money), medida (measure), codigo (exact code), tempo
   (time), dic (dictionary text), qualquer (any JSON); ver (view), conferir (verify), filtrar (filter), calcular
   (aggregate), comparar (diff), avaliar (score/top-k), escolher (top-k of a column), reconhecer (classify).
