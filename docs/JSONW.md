@@ -70,7 +70,7 @@ autômato é montado ao abrir); casa palavra inteira, sem acento e sem caixa, e 
 ## Arquivo `.jsw`: garantias
 - Só anexa: cada bloco se sustenta (marcador, crc32c, hash); arquivo cortado perde só o último bloco e `wjsw reparar` refaz
   o fim; dá para ler em fluxo enquanto outro processo grava (`tail -f` que nunca vê bloco pela metade).
-- Acesso direto a (linha, campo) sem decodificar o resto; leitura paralela por bloco; `mmap` compartilhado entre processos.
+- Acesso direto a (linha, campo) sem decodificar o resto; blocos independentes, que permitem leitura paralela (a ferramenta de hoje lê com um núcleo; a leitura em vários núcleos é o próximo passo); `mmap` compartilhado entre processos.
 - Zonas (mínimo e máximo por bloco) fazem a busca pular blocos inteiros.
 - Compressão em três níveis (0 nenhuma, 1 rápida, 2 máxima) e custódia por SHA-256 (padrão) ou BLAKE3, com cadeia do
   arquivo inteiro: qualquer dado, zona ou dicionário trocado falha no `conferir`.
