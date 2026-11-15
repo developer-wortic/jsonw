@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="version" src="https://img.shields.io/badge/version-1.4.0-1d1d1f?style=flat-square">
+  <img alt="version" src="https://img.shields.io/badge/version-1.4.1-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-11%20languages-2ac2f3?style=flat-square">
   <img alt="TypeScript types" src="https://img.shields.io/badge/TypeScript-types%20included-3178c6?style=flat-square">
@@ -409,6 +409,23 @@ Machine-readable metadata: [`CITATION.cff`](CITATION.cff).
 
 jsonW's wire protocol runs over QUIC with TLS 1.3 and the **X25519MLKEM768** post-quantum key exchange (NIST ML-KEM,
 FIPS 203). Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
+
+## What's new in 1.4.1
+
+### Security fix: the permission view now applies to every command that reads values
+In 1.4.0 only `ver` and the web server applied the permission view. The other CLI commands read every column, so a `+pessoal` column (for example a personal ID number) could leak:
+
+- `filtrar` matched a condition on the hidden column, which revealed that the value existed;
+- `para-texto` and `calcular` printed the hidden values;
+- `filtrar` with an output file wrote them to disk.
+
+In 1.4.1 the same view applies to `ver`, `para-texto`, `filtrar`, `calcular`, `escolher`, `avaliar`, `comparar` and `info`. Without `WJSW_ESCOPOS`, `+pessoal` and `+escopo(x)` columns come out null. A condition, group or score on a hidden column fails with `coluna sem permissao: <column> (exige escopo)`. An output file stores the hidden column as null. With a tenant view, the `filtrar` header shows only the rows that session can see, not the total of other tenants.
+
+Measured with the same test file on macOS arm64: 1.4.0 failed 23 of 37 checks; 1.4.1 fails 0 of 37. The full suite also passes with AddressSanitizer and UBSan on Linux.
+
+`regravar`, `cifrar`, `decifrar`, `de-texto`, `de-json`, `conferir`, `reparar` and `medir` stay outside the view: they are file-owner operations and copy the whole file. Do not hand the raw `.jsw` file to someone who should see only part of it. Give them the output of `ver` or of the web server.
+
+**Upgrade if you rely on `+pessoal` or `+escopo(x)` columns.** The file format did not change: 1.4.1 reads every file written by 1.4.0, 1.3.x and 1.2.1.
 
 ## What's new in 1.4.0
 

@@ -1,6 +1,6 @@
 {
   "name": "@wortictecnologia/jsonw",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "jsonW: the data format for the AI era. JSON-compatible text, a Parquet-like columnar file and a vector index in one: money, decimals, units, embeddings, top-k semantic search, multi-tenant permissions and custody inside the file. TypeScript types, zero-dependency C core.",
   "type": "module",
   "exports": {

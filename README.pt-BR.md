@@ -574,6 +574,23 @@ linguagem, no padrão llms.txt. O mesmo `llms.txt` está em [jsonw.org/llms.txt]
 - **Custódia e credencial:** só hash e HMAC de 256 bits, que seguem seguros contra o computador quântico.
 - **Mídia gerada por IA:** tensores `bf16`/`f16`, progresso enquanto gera, e áudio, imagem e vídeo em pedaços com 0,04% de envelope.
 
+## Novidades da 1.4.1
+
+### Correção de segurança: a visão por permissão vale em todo comando que lê valores
+Na 1.4.0, só o `ver` e o servidor web aplicavam a visão por permissão. Os outros comandos da linha de comando liam todas as colunas, e uma coluna `+pessoal` (um CPF, por exemplo) podia vazar:
+
+- o `filtrar` achava a linha por uma condição na coluna escondida, o que revelava que o valor existia;
+- o `para-texto` e o `calcular` mostravam os valores escondidos;
+- o `filtrar` com arquivo de saída gravava esses valores no disco.
+
+Na 1.4.1, a mesma visão vale para `ver`, `para-texto`, `filtrar`, `calcular`, `escolher`, `avaliar`, `comparar` e `info`. Sem `WJSW_ESCOPOS`, as colunas `+pessoal` e `+escopo(x)` saem nulas. Uma condição, um grupo ou uma nota em coluna escondida dá o erro `coluna sem permissao: <coluna> (exige escopo)`. O arquivo de saída grava a coluna escondida como nula. Com visão de tenant, o cabeçalho do `filtrar` mostra só as linhas que a sessão vê, sem o total dos outros tenants.
+
+Medido com o mesmo arquivo de teste no macOS arm64: a 1.4.0 falhou em 23 das 37 checagens; a 1.4.1 falha em 0 das 37. A bateria inteira também passa com AddressSanitizer e UBSan no Linux.
+
+`regravar`, `cifrar`, `decifrar`, `de-texto`, `de-json`, `conferir`, `reparar` e `medir` ficam fora da visão: são operações do dono do arquivo e copiam o arquivo inteiro. Não entregue o `.jsw` bruto a quem só deve ver parte dele. Entregue a saída do `ver` ou do servidor web.
+
+**Atualize se você usa colunas `+pessoal` ou `+escopo(x)`.** O formato do arquivo não mudou: a 1.4.1 lê todo arquivo gravado pela 1.4.0, pela 1.3.x e pela 1.2.1.
+
 ## Novidades da 1.4.0
 
 ### Como cifrar um arquivo jsonW em repouso?
