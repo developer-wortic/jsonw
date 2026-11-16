@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="version" src="https://img.shields.io/badge/version-1.4.1-1d1d1f?style=flat-square">
+  <img alt="version" src="https://img.shields.io/badge/version-1.4.2-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-15%20languages-2ac2f3?style=flat-square">
   <img alt="TypeScript types" src="https://img.shields.io/badge/TypeScript-types%20included-3178c6?style=flat-square">
@@ -412,6 +412,31 @@ exchange (NIST ML-KEM, FIPS 203) in the Wortic inference server: one QUIC stream
 The remote reader in this package (`wremoto`) uses HTTPS over TLS 1.3 with OpenSSL 4, whose default key exchange is the same
 hybrid; against jsonw.org it negotiates X25519MLKEM768 (measured 15/11/2026), and servers that offer only classic X25519
 still work. Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
+
+## What's new in 1.4.2
+
+### A measure column no longer loses value
+Before 1.4.2, `medida[kg]` rounded to the whole unit: 1 lb was stored as 0 kg. Now the column keeps the exact value.
+Measured with the 1.4.2 binary for macOS arm64:
+```bash
+$ wjsw de-texto 'id:i64,peso:medida[kg],preco:dinheiro' m.jsw.txt m.jsw
+$ wjsw ver m.jsw
+{id:1,peso:0.45359237 kg,preco:12.50 BRL}
+{id:2,peso:0.90718474 kg,preco:0.25 BRL}
+```
+- Declare a scale when you want a fixed number of decimals: `medida[kg,3]` rounds there (1 lb becomes 0.454 kg).
+- A unit with no exact scale is refused with a hint: `a unidade m/s pede escala: medida[m/s,3]`.
+
+### `calcular --valor` sums money
+The sum is done in whole cents, with no floating point, and comes out with the currency:
+```bash
+$ wjsw calcular m.jsw --valor preco
+total: 2 linha(s) · soma 12.75 BRL · min 0.25 · max 12.5 · media 6.375
+```
+Mixed currencies in the same column are refused (`moedas misturadas na coluna preco (BRL e USD)`).
+
+**Compatibility:** files written with `medida[kg]` keep opening. Files written by 1.4.1 with the old rounding are not fixed by
+themselves: rewrite them from the source. A schema with a declared scale (`medida[kg,3]`) does not open in 1.4.1 readers.
 
 ## What's new in 1.4.1
 

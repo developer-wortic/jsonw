@@ -11,7 +11,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define JSONW_VERSAO "1.4.1"
+#define JSONW_VERSAO "1.4.2"
 #ifndef JSONW_API
 #  if defined(_WIN32)
 #    define JSONW_API __declspec(dllexport)

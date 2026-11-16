@@ -8,7 +8,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
-  <img alt="versão" src="https://img.shields.io/badge/vers%C3%A3o-1.4.1-1d1d1f?style=flat-square">
+  <img alt="versão" src="https://img.shields.io/badge/vers%C3%A3o-1.4.2-1d1d1f?style=flat-square">
   <img alt="plataformas" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binários-1d1d1f?style=flat-square">
   <img alt="SDKs" src="https://img.shields.io/badge/SDKs-15%20linguagens-2ac2f3?style=flat-square">
   <img alt="núcleo" src="https://img.shields.io/badge/núcleo-C%20sem%20dependência-1d1d1f?style=flat-square">
@@ -576,6 +576,31 @@ linguagem, no padrão llms.txt. O mesmo `llms.txt` está em [jsonw.org/llms.txt]
   oferece o X25519 clássico continua funcionando.
 - **Custódia e credencial:** só hash e HMAC de 256 bits, que seguem seguros contra o computador quântico.
 - **Mídia gerada por IA:** tensores `bf16`/`f16`, progresso enquanto gera, e áudio, imagem e vídeo em pedaços com 0,04% de envelope.
+
+## Novidades da 1.4.2
+
+### A coluna de medida não perde mais valor
+Antes da 1.4.2, `medida[kg]` arredondava na unidade inteira: 1 libra virava 0 kg. Agora a coluna guarda o valor exato.
+Medido com o binário 1.4.2 para macOS arm64:
+```bash
+$ wjsw de-texto 'id:i64,peso:medida[kg],preco:dinheiro' m.jsw.txt m.jsw
+$ wjsw ver m.jsw
+{id:1,peso:0.45359237 kg,preco:12.50 BRL}
+{id:2,peso:0.90718474 kg,preco:0.25 BRL}
+```
+- Quem quer um número fixo de casas declara a escala: `medida[kg,3]` arredonda nela (1 libra vira 0,454 kg).
+- Unidade sem escala exata é recusada com a dica: `a unidade m/s pede escala: medida[m/s,3]`.
+
+### `calcular --valor` soma dinheiro
+A soma é feita em centavos inteiros, sem ponto flutuante, e sai com a moeda:
+```bash
+$ wjsw calcular m.jsw --valor preco
+total: 2 linha(s) · soma 12.75 BRL · min 0.25 · max 12.5 · media 6.375
+```
+Moedas misturadas na mesma coluna são recusadas (`moedas misturadas na coluna preco (BRL e USD)`).
+
+**Compatibilidade:** arquivo gravado com `medida[kg]` continua abrindo. Arquivo gravado pela 1.4.1 com o arredondamento antigo
+não se corrige sozinho: regrave a partir da fonte. Esquema com escala declarada (`medida[kg,3]`) não abre em leitores 1.4.1.
 
 ## Novidades da 1.4.1
 
