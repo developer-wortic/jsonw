@@ -10,7 +10,7 @@
   <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
   <img alt="version" src="https://img.shields.io/badge/version-1.4.1-1d1d1f?style=flat-square">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
-  <img alt="SDKs" src="https://img.shields.io/badge/SDKs-11%20languages-2ac2f3?style=flat-square">
+  <img alt="SDKs" src="https://img.shields.io/badge/SDKs-15%20languages-2ac2f3?style=flat-square">
   <img alt="TypeScript types" src="https://img.shields.io/badge/TypeScript-types%20included-3178c6?style=flat-square">
   <img alt="core" src="https://img.shields.io/badge/core-C%2C%20zero%20deps-1d1d1f?style=flat-square">
   <img alt="post-quantum" src="https://img.shields.io/badge/transport-post--quantum-0049ff?style=flat-square">
