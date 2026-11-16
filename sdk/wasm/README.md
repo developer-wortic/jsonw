@@ -1,6 +1,6 @@
 # jsonW em WebAssembly
 
-O mesmo núcleo em C, compilado para WebAssembly (193 KB): lê `.jsw` no navegador, no React Native, no Deno, no Bun e em
+O mesmo núcleo em C, compilado para WebAssembly (221 KB): lê `.jsw` no navegador, no React Native, no Deno, no Bun e em
 funções de borda, sem servidor. A API é a do SDK de Node, com uma diferença: `abrir()` recebe os bytes do arquivo, não
 um caminho.
 
