@@ -6,11 +6,11 @@ consultar dados em jsonW. Leia inteiro antes de escrever código. (English summa
 ## O que é, em uma frase
 jsonW é um modelo de dados com três formas sem perda entre elas: **linha** (binária, tempo real), **coluna** (arquivo `.jsw`)
 e **texto** (jsonW-texto; todo JSON válido é jsonW-texto válido). Ferramenta `wjsw`, biblioteca `libjsonw` (ABI em
-`sdk/jsonw.h`) e SDKs em 10 linguagens. O núcleo em C é fechado; use só a ferramenta, a ABI e os SDKs.
+`sdk/jsonw.h`) e SDKs em 15 linguagens. O núcleo em C é fechado; use só a ferramenta, a ABI e os SDKs.
 
 ## Onde está cada coisa
 - `bin/<plataforma>/`: `wjsw` (ferramenta), `wjsw-cgi` (servidores web), `wcon` (bancos de dados) e `wremoto` (leitura
-  remota), `libjsonw.a` e a biblioteca dinâmica. Plataformas: `macos-arm64`, `linux-x86_64`, `windows-x86_64` (`.exe`,
+  remota), `libjsonw.a` e a biblioteca dinâmica. Plataformas: `macos-arm64`, `linux-x86_64`, `linux-arm64`, `windows-x86_64` (`.exe`,
   `.dll`; sem `wcon` e `wremoto`, que rodam pelo WSL).
 - `sdk/`: um SDK por linguagem; `sdk/README.md` diz como compilar cada um; `bash sdk/prova.sh` prova todos.
 - `docs/JSONW.md`: referência completa de tipos, esquema, ferramenta, garantias e segurança.
