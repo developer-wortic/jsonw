@@ -1,0 +1,16 @@
+{
+    "name": "wortictecnologia/jsonw",
+    "description": "jsonW para PHP 8.4+ (Laravel, Symfony, WordPress) pela extensão FFI, por cima da ABI C (libjsonw).",
+    "type": "library",
+    "keywords": ["jsonw", "json", "parquet", "columnar", "ffi", "laravel", "wordpress", "vector-search", "multi-tenant"],
+    "homepage": "https://jsonw.org",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.4",
+        "ext-ffi": "*",
+        "ext-json": "*"
+    },
+    "autoload": {
+        "files": ["jsonw.php"]
+    }
+}

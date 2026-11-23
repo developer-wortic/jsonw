@@ -1,0 +1,8 @@
+// x402.jsw.txt: o perfil jsonW do x402 v2 (HTTP 402 Payment Required), tirado de specs/x402-specification-v2.md do repositório
+// coinbase/x402 (lido em 14/11/2026). Cabeçalhos: PAYMENT-REQUIRED (resposta 402), PAYMENT-SIGNATURE (pedido pago) e
+// EXTENSION-RESPONSES. "amount" é texto em unidades atômicas da moeda (como a spec manda): não vira número, para não perder precisão.
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"x402",versao:"2",objeto:"PaymentRequirements",esquema:"scheme:dic,network:dic,amount:codigo,asset:codigo,payTo:codigo,maxTimeoutSeconds:i64,extra:qualquer?",fonte:"https://github.com/coinbase/x402/blob/main/specs/x402-specification-v2.md"}
+{protocolo:"x402",versao:"2",objeto:"PaymentRequired",esquema:"x402Version:i64,error:texto?,resource:qualquer,accepts:lista<obj{scheme:dic,network:dic,amount:codigo,asset:codigo,payTo:codigo,maxTimeoutSeconds:i64,extra:qualquer?}>,extensions:qualquer?",fonte:"https://github.com/coinbase/x402/blob/main/specs/x402-specification-v2.md"}
+{protocolo:"x402",versao:"2",objeto:"PaymentPayload",esquema:"x402Version:i64,resource:qualquer?,accepted:qualquer,payload:qualquer,extensions:qualquer?",fonte:"https://github.com/coinbase/x402/blob/main/specs/x402-specification-v2.md"}
+{protocolo:"x402",versao:"2",objeto:"SettlementResponse",esquema:"success:bool,errorReason:texto?,payer:codigo?,transaction:codigo,network:dic,amount:codigo?,extensions:qualquer?",fonte:"https://github.com/coinbase/x402/blob/main/specs/x402-specification-v2.md"}

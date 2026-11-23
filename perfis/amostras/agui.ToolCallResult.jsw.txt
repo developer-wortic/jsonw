@@ -1,0 +1,2 @@
+// borda-json: eventos do AG-UI como o cliente de fora os recebe por SSE; a prova grava em jsonW e confere a volta
+{"type":"TOOL_CALL_RESULT","messageId":"msg-2","toolCallId":"tc-1","content":"WORTIC LTDA - Ativa","role":"tool","timestamp":null,"rawEvent":null}

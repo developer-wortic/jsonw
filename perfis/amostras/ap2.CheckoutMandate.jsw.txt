@@ -1,0 +1,2 @@
+// borda-json: mandatos do AP2 como o agente de fora os apresenta (conteúdo da credencial SD-JWT); a prova grava em jsonW e confere a volta
+{"vct":"mandate.checkout.1","checkout_jwt":"eyJhbGciOiJFUzI1NiJ9.eyJpdGVtcyI6W119.c2lnbmF0dXJh","checkout_hash":"n4bQgYhMfWWaL-qgxVrQFaO_TxsrC4Is0V1sFbDwCgg","iat":1763156400,"exp":1763160000}

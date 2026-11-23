@@ -1,0 +1,8 @@
+// mpp.jsw.txt: o perfil jsonW do MPP (Machine Payments Protocol, Stripe e Tempo), tirado do rascunho IETF draft-httpauth-payment-01
+// (https://datatracker.ietf.org/doc/draft-httpauth-payment/, lido em 14/11/2026). O desafio vai no WWW-Authenticate (esquema
+// "Payment"); a credencial no Authorization (ou Payment-Authorization) e o recibo no Payment-Receipt, os dois em base64url de um JSON.
+// Aqui ficam o desafio (os parâmetros), a credencial e o recibo já decodificados. "request" e "opaque" seguem em base64url, como a spec.
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"mpp",versao:"draft-httpauth-payment-01",objeto:"Challenge",esquema:"id:codigo,realm:texto,method:dic,intent:dic,request:codigo,digest:codigo?,expires:texto?,description:texto?,header:dic?,opaque:codigo?",fonte:"https://datatracker.ietf.org/doc/draft-httpauth-payment/"}
+{protocolo:"mpp",versao:"draft-httpauth-payment-01",objeto:"Credential",esquema:"challenge:obj{id:codigo,realm:texto,method:dic,intent:dic,request:codigo,description:texto?,opaque:codigo?,digest:codigo?,expires:texto?,header:dic?},source:texto?,payload:qualquer",fonte:"https://datatracker.ietf.org/doc/draft-httpauth-payment/"}
+{protocolo:"mpp",versao:"draft-httpauth-payment-01",objeto:"Receipt",esquema:"status:dic,method:dic,timestamp:texto,reference:codigo",fonte:"https://datatracker.ietf.org/doc/draft-httpauth-payment/"}

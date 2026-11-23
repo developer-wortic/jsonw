@@ -1,0 +1,2 @@
+// borda-json: eventos do AG-UI como o cliente de fora os recebe por SSE; a prova grava em jsonW e confere a volta
+{"type":"TOOL_CALL_ARGS","toolCallId":"tc-1","delta":"{\"cnpj\":\"37.853.407/0001-71\"}","timestamp":null,"rawEvent":null}

@@ -1,0 +1,17 @@
+[package]
+name = "jsonw"
+version = "1.3.13"
+edition = "2024"
+rust-version = "1.100"
+description = "jsonW para Rust, por cima da ABI C (libjsonw)"
+license-file = "../../LICENCA.md"
+build = "build.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+
+[[example]]
+name = "ler"
+path = "examples/ler.rs"

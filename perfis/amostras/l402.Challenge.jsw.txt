@@ -1,0 +1,2 @@
+// borda-json: partes dos cabeçalhos do L402 como chegam de fora, já separadas; a prova grava em jsonW e confere a volta
+{"esquema_http":"L402","macaroon":"AgEEbHNhdAJCAAAClGOZrh7C569Yc7UMk8merfnMdIviyXr1qscW7VgpChNl21LkZ8Jex5QiPp+E1VaabeJDuWmlrh/j583axFpNAAIXc2VydmljZXM9c2VydmljZTE6MCxzZXJ2aWNlMjowAAAGIAvnlhC1xsOGdpwYnZW3bv8qBBqo9FlvVRBVRF1KNDGS","invoice":"lnbc100n1pj9nr7mpp5"}

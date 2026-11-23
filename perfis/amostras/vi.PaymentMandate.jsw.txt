@@ -1,0 +1,2 @@
+// borda-json: exemplo oficial do Verifiable Intent (spec/credential-format.md), decodificado e compactado; a prova grava em jsonW e confere a volta
+{"vct":"mandate.payment.1","payment_instrument":{"type":"mastercard.srcDigitalCard","id":"f199c3dd-7106-478b-9b5f-7af9ca725170","description":"Mastercard **** 1234"},"payment_amount":{"currency":"USD","amount":27999},"payee":{"id":null,"name":"AudioShop Inc.","website":"https://audioshop.example.com"},"transaction_id":"abc123def456..."}

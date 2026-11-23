@@ -1,0 +1,2 @@
+// borda-json: eventos do AG-UI como o cliente de fora os recebe por SSE; a prova grava em jsonW e confere a volta
+{"type":"RUN_FINISHED","outcome":null,"result":{"empresas":12},"timestamp":1763156405000,"rawEvent":null}

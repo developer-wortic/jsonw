@@ -1,0 +1,2 @@
+// borda-json: amostras do A2A no formato em que um agente de fora manda (JSON do protocolo); a prova grava em jsonW e confere a volta
+{"artifactId":"art-1","name":"empresas","description":"Padarias abertas em Porto Alegre em 11/2026","parts":[{"text":null,"raw":null,"url":null,"data":{"cnpjs":["37853407000171"]},"metadata":null,"filename":null,"mediaType":"application/json"}],"metadata":null,"extensions":null}

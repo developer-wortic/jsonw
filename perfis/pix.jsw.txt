@@ -1,0 +1,12 @@
+// pix.jsw.txt: o perfil jsonW da API Pix do Banco Central (bacen/pix-api, openapi.yaml 2.11.0-rc1, lido em 14/11/2026). Valores em dinheiro
+// são texto "\d{1,10}\.\d{2}" como o OpenAPI manda (não viram número, para não perder o formato); objetos aninhados vão como qualquer.
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"pix",versao:"2.11.0",objeto:"CobSolicitada",esquema:"calendario:qualquer,devedor:qualquer?,valor:qualquer,tributo:qualquer?,chave:codigo,solicitacaoPagador:texto?,infoAdicionais:qualquer?",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"CobVSolicitada",esquema:"calendario:qualquer,loc:qualquer?,devedor:qualquer,valor:qualquer,tributo:qualquer?,chave:codigo,solicitacaoPagador:texto?",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"CobGerada",esquema:"calendario:qualquer,txid:codigo,revisao:i64,loc:qualquer?,location:codigo?,status:dic,devedor:qualquer?,valor:qualquer,tributo:qualquer?,valorLiquidoEstimado:codigo?,chave:codigo,solicitacaoPagador:texto?,infoAdicionais:qualquer?",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"CobPayload",esquema:"calendario:qualquer,txid:codigo,revisao:i64,status:dic,valor:qualquer,chave:codigo,solicitacaoPagador:texto?,infoAdicionais:qualquer?",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"Pix",esquema:"endToEndId:codigo,txid:codigo?,valor:codigo,horario:codigo,infoPagador:texto?,devolucoes:qualquer?",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"DevolucaoSolicitada",esquema:"valor:codigo",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"Devolucao",esquema:"id:codigo,rtrId:codigo,valor:codigo,horario:qualquer,status:dic",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"WebhookSolicitado",esquema:"webhookUrl:url",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}
+{protocolo:"pix",versao:"2.11.0",objeto:"LoteCobV",esquema:"descricao:texto,cobsv:qualquer",fonte:"https://github.com/bacen/pix-api/blob/master/openapi.yaml"}

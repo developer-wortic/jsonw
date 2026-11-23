@@ -1,0 +1,18 @@
+// agui.jsw.txt: o perfil jsonW do AG-UI (Agent-User Interaction Protocol), eventos de https://docs.ag-ui.com/concepts/events
+// (lidos em 14/11/2026). Um esquema por tipo de evento (o "type" diz qual é); campos comuns: type, timestamp?, rawEvent?.
+// Nesta leva, os 13 eventos do fluxo central (execução, mensagem de texto, chamada de tool, estado e Custom). Ficam para a
+// próxima: Chunk, Activity, Reasoning, Subagent, Raw e MetaEvent (rascunho).
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"agui",versao:"2026-11",objeto:"RunStarted",esquema:"type:dic,threadId:codigo,runId:codigo,parentRunId:codigo?,input:qualquer?,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"RunFinished",esquema:"type:dic,outcome:qualquer?,result:qualquer?,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"RunError",esquema:"type:dic,message:texto,code:dic?,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"TextMessageStart",esquema:"type:dic,messageId:codigo,role:dic,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"TextMessageContent",esquema:"type:dic,messageId:codigo,delta:texto,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"TextMessageEnd",esquema:"type:dic,messageId:codigo,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"ToolCallStart",esquema:"type:dic,toolCallId:codigo,toolCallName:dic,parentMessageId:codigo?,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"ToolCallArgs",esquema:"type:dic,toolCallId:codigo,delta:texto,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"ToolCallEnd",esquema:"type:dic,toolCallId:codigo,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"ToolCallResult",esquema:"type:dic,messageId:codigo,toolCallId:codigo,content:texto,role:dic?,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"StateSnapshot",esquema:"type:dic,snapshot:qualquer,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"StateDelta",esquema:"type:dic,delta:lista<qualquer>,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}
+{protocolo:"agui",versao:"2026-11",objeto:"Custom",esquema:"type:dic,name:dic,value:qualquer,timestamp:i64?,rawEvent:qualquer?",fonte:"https://docs.ag-ui.com/concepts/events"}

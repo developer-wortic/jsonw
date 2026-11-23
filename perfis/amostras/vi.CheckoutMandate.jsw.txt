@@ -1,0 +1,2 @@
+// borda-json: exemplo oficial do Verifiable Intent (spec/credential-format.md), decodificado e compactado; a prova grava em jsonW e confere a volta
+{"vct":"mandate.checkout.1","checkout_jwt":"<merchant-signed-jwt>","checkout_hash":"abc123def456..."}

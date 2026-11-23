@@ -1,0 +1,2 @@
+// borda-json: eventos do AG-UI como o cliente de fora os recebe por SSE; a prova grava em jsonW e confere a volta
+{"type":"CUSTOM","name":"wortic.aviso","value":{"texto":"Lista pronta"},"timestamp":null,"rawEvent":null}

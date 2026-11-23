@@ -1,0 +1,8 @@
+// vi.jsw.txt: o perfil jsonW do Verifiable Intent (Mastercard e Google), Draft v0.1, tirado de spec/credential-format.md do repositório
+// agent-intent/verifiable-intent (lido em 14/11/2026). Conteúdo decodificado das credenciais SD-JWT: L1 (o emissor assina), L2 (o
+// usuário delega, modo imediato) e os dois mandatos dentro dela. A L3 (o agente prova o escopo) entra na próxima leva.
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"vi",versao:"0.1",objeto:"L1Payload",esquema:"iss:url,sub:codigo,iat:i64,exp:i64,vct:url,cnf:obj{jwk:qualquer},pan_last_four:codigo,scheme:dic,card_id:codigo?,_sd_alg:dic,_sd:lista<codigo>",fonte:"https://github.com/agent-intent/verifiable-intent/blob/main/spec/credential-format.md"}
+{protocolo:"vi",versao:"0.1",objeto:"L2Payload",esquema:"nonce:codigo,aud:url,iss:url?,iat:i64,exp:i64,sd_hash:codigo,delegate_payload:lista<qualquer>,_sd_alg:dic,_sd:lista<codigo>",fonte:"https://github.com/agent-intent/verifiable-intent/blob/main/spec/credential-format.md"}
+{protocolo:"vi",versao:"0.1",objeto:"CheckoutMandate",esquema:"vct:dic,checkout_jwt:texto,checkout_hash:codigo",fonte:"https://github.com/agent-intent/verifiable-intent/blob/main/spec/credential-format.md"}
+{protocolo:"vi",versao:"0.1",objeto:"PaymentMandate",esquema:"vct:dic,payment_instrument:obj{type:dic,id:codigo,description:texto?},payment_amount:obj{currency:dic,amount:i64},payee:obj{id:codigo?,name:texto,website:url},transaction_id:codigo",fonte:"https://github.com/agent-intent/verifiable-intent/blob/main/spec/credential-format.md"}

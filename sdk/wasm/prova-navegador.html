@@ -1,0 +1,22 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>jsonW no navegador</title>
+<pre id="saida">rodando</pre>
+<script type="module">
+  import { carregar } from "./jsonw.js";
+
+  const saida = document.getElementById("saida");
+  try {
+    const j = await carregar();
+    const bytes = new Uint8Array(await (await fetch("./teste.jsw")).arrayBuffer());
+    const a = j.abrir(bytes);
+    a.conferir();
+    const linhas = [...a];
+    const melhor = a.avaliar({ pesos: { preco: 1 } }, 1)[0];
+    const chave = a.indexar("id").chave("id", 2);
+    a.fechar();
+    saida.textContent = `ok ${j.versao} ${linhas.length} linhas ${JSON.stringify(linhas[0])} melhor=${melhor.linha} chave=${chave}`;
+  } catch (e) {
+    saida.textContent = `FALHOU ${e}`;
+  }
+</script>

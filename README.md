@@ -1,0 +1,580 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-escuro-en.svg">
+    <img alt="jsonW: JSON was not built for AI. jsonW was." src="assets/banner-claro-en.svg" width="100%">
+  </picture>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@wortictecnologia/jsonw"><img alt="npm" src="https://img.shields.io/npm/v/@wortictecnologia/jsonw?style=flat-square&color=cb3837&label=npm"></a>
+  <a href="https://jsonw.org"><img alt="site" src="https://img.shields.io/badge/site-jsonw.org-0049ff?style=flat-square"></a>
+  <img alt="version" src="https://img.shields.io/badge/version-2.0.0-1d1d1f?style=flat-square">
+  <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-binaries-1d1d1f?style=flat-square">
+  <img alt="SDKs" src="https://img.shields.io/badge/SDKs-15%20languages-2ac2f3?style=flat-square">
+  <img alt="TypeScript types" src="https://img.shields.io/badge/TypeScript-types%20included-3178c6?style=flat-square">
+  <img alt="core" src="https://img.shields.io/badge/core-C%2C%20zero%20deps-1d1d1f?style=flat-square">
+  <img alt="post-quantum" src="https://img.shields.io/badge/transport-post--quantum-0049ff?style=flat-square">
+</p>
+
+<p align="center">
+  <a href="https://jsonw.org"><b>Site</b></a> ·
+  <a href="https://jsonw.org/paper/en"><b>Paper</b></a> ·
+  <a href="#install"><b>Install</b></a> ·
+  <a href="#jsonw-vs-json-parquet-csv-arrow-and-protobuf"><b>Compare</b></a> ·
+  <a href="#faq"><b>FAQ</b></a> ·
+  <a href="AGENTS.md"><b>For AI agents</b></a> ·
+  <a href="llms.txt"><b>llms.txt</b></a> ·
+  <a href="README.pt-BR.md"><b>Português</b></a>
+</p>
+
+---
+
+**jsonW is a data format for the AI era: one file that is at once JSON-compatible text, a columnar store like Parquet, a
+vector index for semantic search and a permission layer.** The same data has three lossless forms (row, column, text), real
+business types (money with currency, exact decimals, units of measure, exact codes, embeddings) and 19 built-in features,
+from top-k cosine search to row-level multi-tenant permissions and tamper-evident custody. Zero-dependency C core, SDKs in 11
+languages, TypeScript types included, made by [Wortic](https://wortic.com.br).
+
+Today the same record travels as **JSON**, is stored as **CSV or Parquet**, is copied into a **vector database** for semantic
+search and goes through yet another **permission layer**. Every conversion costs time and memory, and sometimes the data
+itself: the price that became a string, the ID that lost its leading zero, the weight nobody knows was grams or kilos.
+jsonW keeps all of it in one place. Wortic runs its own agent index, AI models and network edge on it.
+
+```text
+6.6×     smaller than uncompressed JSONL
+2,310×   faster to read a whole column
+0        dependencies: C and the standard library
+```
+<sub>Measured 2026-11-13 with 1.3.11: 100k synthetic records, median of 10 runs, against the same set in JSONL read by our own JSON
+reader. JSONL compressed with zstd or xz is smaller than the default level (the 1.3.11 maximum level is below both on that very repetitive data), and faster JSON libraries narrow the gap; the single-column
+gap comes from the columnar layout. Methodology and limitations in the <a href="https://jsonw.org/paper/en">paper</a>.
+Measure on your machine: <code>wjsw medir</code>.</sub>
+
+With real data, the whole INPI (Brazil) trademark base (7 CSV files, 55.3 million rows, 12.53 GB, converted 1:1):
+
+```text
+4.9×     smaller than the CSV (6.5× at the maximum level) and 12.8× smaller than the XML
+1        file with types, search, permissions and custody inside — no vector database, no separate layer
++        on the in-force count, ahead of Parquet, of DuckDB over CSV, and of grep
+```
+<sub>Measured 2026-11-13 (fifth run) with the 1.3.11 release, on an 8-core server on both sides: three column queries, lowest of 5, Parquet written and read by DuckDB
+2.0.0. <code>grep</code> on the CSV got one of the three counts wrong (it found the value in another column); jsonW, Parquet and
+XML got it right. On size, the <code>.jsw</code> at the maximum level is 1.2× of Parquet (1.5× at the default), already carrying the business types, search, permissions and custody that Parquet needs separate systems for. Reading the <code>.jsw</code> uses a single core today; parallel multi-core reading is the next step, and it is where 8-core Parquet still leads on two of the three queries (1.6× and 3.5× on the history and class 35). XLSX is out: 6 of the 7 files exceed 1,048,576 rows. Tables 5C and 5D of the
+<a href="https://jsonw.org/paper/en#formatos-reais">paper</a>.</sub>
+
+## Install
+
+| You use | Install | Then |
+|---|---|---|
+| **Node.js · TypeScript** (Next.js, Remix, Astro, Nuxt, SvelteKit, SolidStart, Angular SSR, NestJS, Express) | `npm install @wortictecnologia/jsonw` | `import { Leitor, Escritor } from "@wortictecnologia/jsonw"`; types ship in `index.d.ts` |
+| **Browser · React Native · Deno · Bun · edge** | `npm install @wortictecnologia/jsonw` | `import { carregar } from "@wortictecnologia/jsonw/wasm"`; the same C core in WebAssembly (193 KB), read-only ([`sdk/wasm`](sdk/wasm/)) |
+| **Flutter · Dart** | [`sdk/dart`](sdk/dart/) plus `libjsonw` from `bin/` | `dart:ffi`, `Leitor('data.jsw')` |
+| **iOS · macOS (Objective-C)** | [`sdk/objc`](sdk/objc/) plus `libjsonw` from `bin/` | `[JWLeitor leitorComCaminho:erro:]`, Swift names included |
+| **COBOL** (GnuCOBOL 3.2+) | [`sdk/cobol`](sdk/cobol/) plus `libjsonw` from `bin/` | `CALL STATIC "jsonw_abrir"`, no C glue |
+| **Command line** (macOS, Linux, Windows) | `npx -p @wortictecnologia/jsonw jsonw` or the binaries in [`bin/`](bin/) | `jsonw de-json data.jsonl data.jsw` |
+| **Python · Go · Rust · Java · Kotlin · Swift · PHP · Ruby · C · C++** | the SDK folder in [`sdk/`](sdk/) plus `libjsonw` from `bin/` | one class per role: `Leitor` (reader), `Escritor` (writer) |
+| **PostgreSQL · MySQL · MariaDB · SQLite · Redis · MongoDB** | `wcon` from `bin/` | `wcon pg "select …" out.jsw`, round trip with no loss |
+| **Apache · nginx · LiteSpeed · Caddy · IIS** | `wjsw-cgi` from `bin/` + [`servidores-web/`](servidores-web/) | serve `.jsw` with the permission view enforced |
+
+React, Vue, Svelte and Solid front ends read jsonW through your server route (the reader runs where the data and the
+credentials are, so hidden columns never reach the browser).
+
+## jsonW vs JSON, Parquet, CSV, Arrow and Protobuf
+
+| | **jsonW** | JSON · JSONL | CSV | Parquet | Arrow IPC | MessagePack · CBOR | Protobuf |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Human-readable text form | ✅ | ✅ | ✅ | — | — | — | — |
+| Binary row form for streaming | ✅ | — | — | — | ✅ | ✅ | ✅ |
+| Columnar file that skips blocks by min/max | ✅ | — | — | ✅ | — | — | — |
+| Lossless conversion between text, row and column | ✅ | — | — | — | — | — | — |
+| Schema inside the file | ✅ | — | — | ✅ | ✅ | — | — |
+| Exact decimals (never floating point) | ✅ | — | — | ✅ | ✅ | — | — |
+| Money with its currency in every value | ✅ | — | — | — | — | — | — |
+| Units of measure, converted on write | ✅ | — | — | — | — | — | — |
+| Typed embeddings (f32, f16, int8, int4) | ✅ | — | — | — | — | — | — |
+| Cosine top-k search with no vector database | ✅ | — | — | — | — | — | — |
+| Column, row and cell permissions per credential | ✅ | — | — | — | — | — | — |
+| Tamper-evident custody (chained SHA-256 or BLAKE3) | ✅ | — | — | — | — | — | — |
+| Partial read over HTTP Range (S3, R2, CDN) | ✅ | — | — | ✅ | ✅ | — | — |
+| Every valid JSON document is valid input as is | ✅ | ✅ | — | — | — | — | — |
+
+Parquet and Arrow carry embeddings as generic lists of numbers; jsonW stores them as vector columns and searches them in
+place. Where Parquet still leads today is multi-core reading: see the honest numbers above and in the
+[paper](https://jsonw.org/paper/en).
+
+## 30-second start
+
+```bash
+git clone https://github.com/developer-wortic/jsonw && cd jsonw
+P=bin/macos-arm64            # or bin/linux-x86_64, bin/windows-x86_64 (wjsw.exe)
+
+printf '%s\n' '{"id":1,"product":"Coffee","price":"12.50 USD","weight":"250 g","sku":"CAF-0250"}' \
+              '{"id":2,"product":"Cheese bread","price":"8.90 USD","weight":"1 kg","sku":"PDQ-1000"}' > sales.jsonl
+
+$P/wjsw de-texto "id:i64,product:texto,price:dinheiro,weight:medida[g],sku:codigo" sales.jsonl sales.jsw
+$P/wjsw ver sales.jsw          # rows in jsonW-text: weight 1 kg became 1000 g (column is medida[g])
+$P/wjsw conferir sales.jsw     # full custody check (sha256 + crc32c)
+$P/wjsw para-texto sales.jsw --json   # back to JSON, lossless
+```
+
+> The schema and the CLI speak Portuguese (`texto` = text, `dinheiro` = money, `medida` = measure, `codigo` = exact code,
+> `ver` = view, `conferir` = verify, `filtrar` = filter). The full type and command reference is in [`AGENTS.md`](AGENTS.md).
+
+## Three forms, one model
+
+```mermaid
+flowchart LR
+    M(("one data<br/>model"))
+    M --- L["<b>Row</b><br/>binary, value after value<br/><i>messages · events · real time</i>"]
+    M --- C["<b>Column</b><br/>.jsw file in blocks, read via mmap<br/><i>batch · history · training · search</i>"]
+    M --- T["<b>Text</b><br/>jsonW-text, every JSON is valid<br/><i>humans reading and writing</i>"]
+```
+
+| Form | Replaces | For |
+|---|---|---|
+| **Row** | JSON, MessagePack, CBOR, Protobuf | messages, events, real time |
+| **Column** (`.jsw`) | JSONL, CSV, Parquet | files, batches, training, search; zero-copy `mmap` |
+| **Text** (jsonW-text) | JSON, TOML, YAML | humans; **every valid JSON is valid jsonW-text** |
+
+## Types JSON doesn't have
+
+Exact decimal (`decimal[2]`, never floating point) · money with ISO 4217 currency per value (`dinheiro`) · measures with 89
+units, converted on write (`medida[kg]`) · exact codes stored byte for byte (`codigo`) · full Unicode text · microsecond UTC
+time · validated URLs · dictionary-encoded text (`dic`) · vectors (`vf32`, `vf16`, `bits`, `vq8`, `vq4`) · tensors
+(`tensor<bf16>[768,768]`) · media · lists, objects, maps and open JSON (`qualquer`). Readers accept both `1,234.56` and
+`1.234,56`, independent of process locale.
+
+## The 19 features
+
+| # | Feature | In one line |
+|---|---|---|
+| 1 | **Term search** | sparse vector with IDF |
+| 2 | **Semantic search** | cosine over dense `vf32`, `vf16`, `vq8` or `vq4` vectors |
+| 3 | **Multilinear grid** | bilinear, trilinear and beyond, straight from the file |
+| 4 | **Scoring request** | weights, cosine, sparse or grid in a one-line request |
+| 5 | **Top-k** | heap-based, deterministic (higher score first, ties by lower row) |
+| 6 | **Zones** | min and max per block and column: searches skip whole blocks |
+| 7 | **Dictionary** | repeated text stored once per file |
+| 8 | **Key index** | straight to a key's row, no scan |
+| 9 | **Lexicon** | Aho-Corasick automaton read from disk; whole words, accent- and case-insensitive |
+| 10 | **Live writing** | read while another process writes, never seeing half a block |
+| 11 | **Live, deleted and history** | rewrite a key to edit; `_apagado: true` deletes; compaction keeps only what's live |
+| 12 | **Permission views** | column, row and cell, per credential |
+| 13 | **Custody** | chained crc32c + SHA-256 (or BLAKE3): any changed byte fails `conferir` |
+| 14 | **Partial remote read** | via HTTP Range, fetch only the blocks of the rows you read |
+| 15 | **Similar spelling and sound** | `~~` filter operator: spelling trigrams and a phonetic key in Brazilian Portuguese, US English, Spanish and Chinese |
+| 16 | **Audio signals** | pitch, pauses, intensity, jitter, shimmer, HNR, formants, MFCC, articulation rate and breaths, as one jsonW row |
+| 17 | **Text signals** | intensifiers, polarity, negation, passive voice, pronouns, caps, punctuation, emoji, laughter and irony cues, in pt, en, es and zh |
+| 18 | **Video into scenes** | frames and sound in; scene cuts, the signals of each stretch and a frame mosaic out |
+| 19 | **Per-block and per-tenant columns** | local dictionary per block, fixed-width digits and a tenant zone: another customer's block is never opened |
+
+Features 16 to 18 measure **how** someone spoke, wrote or appeared; they decide nothing (your model interprets). They come out
+through the ABI (`jsonw_sinal_audio`, `jsonw_sinal_texto`, `jsonw_video_*`), always as one row of jsonW-text in the declared
+schema. A `.jsw` written with the feature-19 codecs opens only in 1.3.11 or newer readers.
+
+```bash
+$P/wjsw filtrar marcas.jsw "nome ~~pt Kokakola"        # finds "Coca-Cola" (and "Kokakola Bebidas")
+$P/wjsw filtrar marcas.jsw "nome ~~en@0.4 guarana"     # the language picks the sound key; @ sets the threshold (0 to 1)
+```
+
+## Permissions inside the format
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App as Application
+    participant S as Server (wjsw / wjsw-cgi / SDK)
+    participant F as .jsw file
+    App->>S: request + signed credential (HMAC-SHA256)
+    S->>S: constant-time check, expiry, nonce and sequence
+    S->>F: opens only the credential's tenant blocks
+    F-->>S: that tenant's rows
+    S->>S: hides +pessoal / +escopo(x) columns without the scope
+    S-->>App: only what this session may see
+```
+
+- **Credential:** issuer, subject, tenant, scopes and expiry, HMAC-SHA256 verified in constant time, nonce + sequence against
+  replay, on top of TLS.
+- **Column:** `+escopo(x)` shows only with scope `x`; `+pessoal` (personal data) only with scope `pessoal`. Hidden columns
+  can't be used in filters either.
+- **Row:** with an integer (`i64`) `tenant` or `tenant_id` column, only the credential's tenant rows are visible; other tenants' blocks are never opened. A text `tenant` column closes the view (nothing leaves).
+- **Cell:** both together. Hidden data never leaves the server.
+
+## SDKs
+
+A stable C ABI ([`sdk/jsonw.h`](sdk/jsonw.h) + `libjsonw`) and one SDK per language, all checked by the same byte-for-byte
+test (`cd sdk && bash prova.sh`): **C, C++17, Python 3, Node.js, PHP 8, Ruby, Go, Rust, Java 22+, Kotlin, Swift**. Node.js from npm:
+`npm install @wortictecnologia/jsonw` (prebuilt for macOS arm64 and Linux x64, plus the `jsonw` command).
+
+```python
+import jsonw
+with jsonw.Escritor("sales.jsw", "id:i64,product:texto,price:dinheiro") as w:   # Escritor = writer
+    w.gravar({"id": 1, "product": "Coffee", "price": "12.50 USD"})            # gravar = write
+with jsonw.Leitor("sales.jsw") as r:                                          # Leitor = reader
+    print(r.campo(0, "price"))                                                # campo = direct field access
+    r.conferir()                                                              # conferir = verify custody
+```
+
+### Lookup by key (1.3.13)
+
+The rows where a field equals a value, in order. Without an index the lookup scans the file; after `indexar(field)` the index
+is built once in the reader and every lookup is a binary search. A repeated key returns every row; rows of another tenant
+(view) are left out. Measured on a 1-million-row file, median of 200 lookups by `id` (macOS arm64):
+
+| | Median | p95 |
+|---|---|---|
+| Scan | 142.8 ms | 204.3 ms |
+| Index (built in 193 ms) | 0.196 ms | 0.315 ms |
+
+```js
+const { Leitor } = require("@wortictecnologia/jsonw");
+const a = new Leitor("companies.jsw");
+a.indexar("uf");                                   // once; afterwards no lookup scans
+for (const i of a.chave("uf", "SP")) console.log(a.linha(i));   // rows where uf = "SP", in order
+a.fechar();
+```
+
+In Python:
+
+```python
+import jsonw
+
+with jsonw.Leitor("companies.jsw") as a:
+    a.indexar("uf")
+    for i in a.chave("uf", "SP"):
+        print(a.linha(i))
+```
+
+ABI: `jsonw_indexar(a, field)`, `jsonw_tem_indice(a, field)` and `jsonw_chave(a, field, value, n, rows, max)`. SDKs: `indexar`,
+`tem_indice`/`temIndice` and `chave`; a 15-line example in `sdk/<language>/exemplo.*`.
+
+## Databases you already use
+
+jsonW doesn't ask you to switch databases. `wcon` moves data from your database into a `.jsw` and back, **round trip with no
+loss**, and `wremoto` reads a `.jsw` stored on R2, S3 or any HTTP server, downloading only the blocks a query needs.
+
+| Database | Database → jsonW | jsonW → database | How the write-back is applied |
+|---|---|---|---|
+| **PostgreSQL** | `wcon pg "<sql>" out.jsw` | `wcon pg-gravar file.jsw schema.table` | one transaction: staging table, binary COPY, typed `INSERT … SELECT` |
+| **MySQL · MariaDB** | `wcon mysql host:port/db "<sql>" out.jsw` | `wcon mysql-gravar file.jsw host:port/db table` | one transaction, binary prepared statements; any error rolls back |
+| **SQLite** | `wcon sqlite file.db "<sql>" out.jsw` | `wcon sqlite-gravar file.jsw file.db table` | one transaction; creates the table if missing |
+| **Redis · Valkey** | `wcon redis host:port "pattern*" out.jsw` | `wcon redis-gravar file.jsw host:port` | `MULTI/EXEC`: string, hash, list, set, zset and each key's TTL |
+| **MongoDB** | `wcon mongo host:port/db collection '{"filter":1}' out.jsw` | `wcon mongo-gravar file.jsw host:port/db collection` | ordered batch inserts |
+| **JSON · JSONL** | `wjsw de-json in.jsonl out.jsw` (schema inferred) | `wjsw para-texto file.jsw --json` | — |
+| **R2 · S3 · HTTP** | `wremoto info\|ver\|filtrar <url>` | — | read-only, by Range |
+
+**The schema comes from the database itself:** `numeric` → exact `decimal`; `bigint` → exact `i64`; Postgres `timestamptz`, `timestamp`
+and `date` → `tempo` (µs UTC, written back exactly); MySQL and SQLite `DATE`/`DATETIME` stay text on purpose (with no zone in
+the database, midnight UTC would shift the day); `uuid`, `bytea`, `bool`,
+arrays → `uuid`, byte-exact `codigo`, `bool`, `lista<t>`; `jsonb` → `qualquer`; pgvector `vector`/`halfvec` → `vf32[n]`/`vf16[n]`;
+MongoDB `ObjectId`/`Decimal128` in Extended JSON; SQLite by the storage class of each value.
+
+**Safe by construction:** values always travel as data with a length prefix (binary COPY, bound parameters, RESP, prepared
+statements, BSON), never spliced into a command. Passwords come from a file (`WMYSQL_CRED`, `WMONGO_CRED`, `WREDIS_CRED`,
+`WJSW_R2_CRED`; Postgres uses `WSQL_URL` plus `PGPASSWORD` or `~/.pgpass`), never from the command line or the output.
+
+**Tested against the real thing**, cell by cell and under hostile input (SQL/JSON/RESP injection, quotes, `\0`, emoji, RTL):
+PostgreSQL 14, 16 and 18 (md5 on both sides), SQLite (`quote()`/`typeof()`), MariaDB 11.8 (`hex()` on 12 columns), Redis 7 (all
+5 types + TTL), MongoDB 7 (canonical Extended JSON), a 435 MB JSONL (md5 via `jq -S`).
+
+<sub>Today MySQL 8 connects with `mysql_native_password` (full `caching_sha2_password` authentication isn't there yet; MariaDB
+works fully). `wcon` and `wremoto` ship for macOS and Linux; on Windows, run them under WSL. Each is a standalone program
+(no `wjsw` or `libjsonw` needed next to it) and uses one system library: `wcon` needs `libsqlite3` and `wremoto` needs `libcurl`
+(already on macOS; on Debian/Ubuntu: `apt install libsqlite3-0 libcurl4`). `wjsw`, `wjsw-cgi` and `libjsonw` depend on nothing
+but the standard library.</sub>
+
+### On Cloudflare R2 (or any S3), without downloading the whole file
+
+Keep the `.jsw` in a bucket and query it in place. `wremoto` fetches the header and footer, then only the blocks a query
+needs; the footer zones rule out blocks that cannot hold the answer, and those are never downloaded. R2 charges no egress, so
+reading a slice of a 10 GB file costs what the slice costs.
+
+```bash
+export WJSW_R2_CRED=~/.cred/r2                         # file with key:secret (never on the command line)
+wremoto info    r2://my-bucket/sales.jsw               # rows, blocks and how much it downloaded to open
+wremoto ver     r2://my-bucket/sales.jsw 1000000 5     # 5 rows starting at row 1,000,000
+wremoto filtrar r2://my-bucket/sales.jsw "preco > 100"
+wremoto info    https://data.example.com/sales.jsw     # any HTTP server with Range (public R2 too)
+```
+
+Every request to R2 or S3 is signed with AWS SigV4; the same file can be served by R2 itself, a Worker or any CDN.
+
+## Web servers
+
+`wjsw-cgi` runs on **Apache, nginx (fcgiwrap), LiteSpeed, Caddy and IIS**, and **every `.jsw` request goes through it**,
+because only it knows what the session may see: a file with no marked column and no tenant is delivered as is, with Range
+(206) and CORS; everything else is filtered by the mandatory permission view (`?formato=json|ndjson`, `?onde=`, `?campos=`,
+`?limite=`). Ready-made configs in [`servidores-web/`](servidores-web/).
+
+> **If you installed the 1.2.0 (or earlier) config, replace it.** There the web server delivered the `.jsw` by itself when a
+> request had no parameter, so the raw file went out with the `+pessoal`/`+escopo(x)` columns and every tenant's rows. Since
+> 1.2.1 no `.jsw` is served without going through `wjsw-cgi`.
+
+## Platforms
+
+macOS arm64 · Linux x86_64 · Windows x86_64 (`wjsw`, `wjsw-cgi`, `libjsonw` static and shared, Node addon on macOS and Linux).
+Database connectors `wcon` and `wremoto`: macOS arm64 and Linux x86_64. Linux binaries need glibc 2.34+ (Ubuntu 22.04+,
+Debian 12+, RHEL 9+). Linux ARM64: `wjsw`, `wjsw-cgi` and `libjsonw` static and shared.
+
+### Versions: who reads what
+
+- **1.3 reads every `.jsw` file written by any earlier version.** Nothing needs to be rewritten.
+- **A file written by 1.3 needs a 1.3 reader or newer.** 1.3 packs blocks tighter; a 1.2 reader opens the header, verifies
+  custody and reports `linha ilegivel` ("unreadable row") when it reads the data.
+- **1.4.0 adds encryption at rest.** A file written by 1.4.0 without encryption is byte for byte the same as 1.3.14 and is read by 1.3.14 and 1.2.1. An encrypted file needs 1.4.0 and the key; older readers refuse it with `versao do jsonW desconhecida`.
+- **Upgrade the reader together with the writer:** `npm install @wortictecnologia/jsonw@latest`, or the binaries in
+  `bin/` on every machine that reads the file, including programs linked against `libjsonw`.
+
+## FAQ
+
+**What is jsonW?**
+An open data format and a zero-dependency C library. The same data lives as text (every JSON is valid jsonW-text), as a
+binary row for streaming and as a columnar `.jsw` file, with no loss between them. Types, search, permissions and custody are
+part of the format, not extra systems around it.
+
+**Is jsonW a replacement for JSON?**
+For storage, analytics and AI workloads, yes. On the wire you can keep JSON: every valid JSON document is valid jsonW-text,
+and `wjsw para-texto file.jsw --json` gives you strict JSON back.
+
+**jsonW or Parquet?**
+Choose jsonW when the data needs business types (money, units, exact codes), semantic search, per-customer permissions or
+proof that no byte changed. Parquet still reads faster on many cores for some scans (1.6× and 3.5× on two of three real
+queries in our measurements) and is about 1.2× smaller than jsonW at the maximum level, because it carries none of that.
+
+**How do I store embeddings for RAG without a vector database?**
+Declare a vector column and search it in place:
+
+```bash
+wjsw de-texto "id:i64,texto:texto,v:vf16[768]" chunks.jsonl chunks.jsw
+wjsw avaliar chunks.jsw cosseno v "<your query embedding>" 5     # top 5 by cosine
+```
+
+`vf16` halves the size of `float32` embeddings; `vq8` and `vq4` quantize further. Combine with term search (IDF) and filters
+in the same request.
+
+**How do I use jsonW with TypeScript, React or Next.js?**
+`npm install @wortictecnologia/jsonw`. On the server (Route Handlers, Server Actions, API routes, loaders) read and write with
+`import { Leitor, Escritor } from "@wortictecnologia/jsonw"`; both `import` and `require` work and the types are included.
+
+**Can I read `.jsw` in the browser or in React Native?**
+Yes, since 1.3.14. `import { carregar } from "@wortictecnologia/jsonw/wasm"` loads the same C core as WebAssembly and opens a
+`.jsw` from bytes (a `fetch`, an asset): rows, search, key lookup, scoring and custody check, with no server. It runs in the
+browser, Deno, Bun and edge functions; in React Native (Hermes has no WebAssembly) pass the `polywasm` implementation. Writing
+stays on the server. For data with permissions, keep the view on the server and send only the rows the session may see.
+
+**Can I query a `.jsw` file on S3 or Cloudflare R2 without downloading it?**
+Yes. `wremoto filtrar r2://bucket/file.jsw "qty > 100"` fetches the header, the footer and only the blocks whose zones can
+match. On R2 there is no egress fee.
+
+**Is jsonW safe for multi-tenant SaaS data?**
+Mark personal and restricted columns in the schema (`+pessoal`, `+escopo(x)`) and add an integer `tenant` column. A reader
+with a signed credential (HMAC-SHA256) only opens that tenant's blocks and returns hidden columns as null.
+
+**How does jsonW handle money and decimals?**
+`decimal[2]` never touches floating point, and `dinheiro` keeps the ISO 4217 currency in every value, so a sum never mixes
+currencies. `0.1 + 0.2` stays `0.3`.
+
+**Does it work with PostgreSQL, MySQL, SQLite, Redis or MongoDB?**
+Yes. `wcon` reads from each of them into a `.jsw` and writes back in one transaction, taking the schema from the column types
+(`numeric` → exact decimal, pgvector → `vf32`/`vf16`).
+
+**Why are the schema keywords in Portuguese?**
+jsonW was born in Brazil. The vocabulary is small and fixed: `texto` (text), `dinheiro` (money), `medida` (measure), `codigo`
+(exact code), `tempo` (time), `dic` (dictionary text), `qualquer` (any JSON). [`AGENTS.md`](AGENTS.md) has the full table for
+humans and AI coding agents.
+
+**Is jsonW open source?**
+No. jsonW is proprietary software by Wortic, **free to use** inside your own products under the
+[Sustainable Use License](LICENSE.md) (fair-code). The public documentation, the SDKs, the TypeScript types and the CLI are
+yours to use; the C core is closed and ships only as compiled binaries. You may not offer jsonW itself as a service,
+reimplement its internal format, or reverse-engineer the core without a commercial license.
+
+**Who makes jsonW?**
+[Wortic](https://wortic.com.br), a Brazilian software company. Wortic runs its AI models, agent index, company data API
+([cnpj.wortic.com](https://cnpj.wortic.com)) and network edge on jsonW.
+
+## Cite jsonW
+
+```bibtex
+@software{jsonw,
+  title   = {jsonW: a data format for the AI era},
+  author  = {{Wortic}},
+  year    = {2026},
+  version = {1.3.14},
+  url     = {https://jsonw.org}
+}
+```
+
+Machine-readable metadata: [`CITATION.cff`](CITATION.cff).
+
+## Post-quantum ready
+
+The jsonW wire protocol (jsonW-fio) runs over QUIC (MsQuic, TLS 1.3) with the hybrid **X25519MLKEM768** post-quantum key
+exchange (NIST ML-KEM, FIPS 203) in the Wortic inference server: one QUIC stream per jsonW flow, no head-of-line blocking.
+The remote reader in this package (`wremoto`) uses HTTPS over TLS 1.3 with OpenSSL 4, whose default key exchange is the same
+hybrid; against jsonw.org it negotiates X25519MLKEM768 (measured 15/11/2026), and servers that offer only classic X25519
+still work. Custody and credentials use only 256-bit hashes and HMAC, which remain secure against quantum computers.
+
+## What's new in 2.0
+
+Three additions to the format, each with its own proof in the tool's test suite (`wjsw teste`: all passed on macOS arm64
+and Linux x86-64), and two to the C ABI.
+
+**Membership filter per block (format v9).** A `codigo` column at `--max` or `--max3`, or any text, bytes or integer
+column marked `+filtro`, gets a Bloom filter per block. An equality filter (`=`) skips every block that certainly does
+not hold the value, without reading or verifying the block; the filter is itself covered by the file's hash chain. It
+never gives a false negative. Files without filters stay in the previous format version, readable by 1.4.
+
+```
+$ wjsw de-texto "id:i64,num:codigo" t.jsw.txt t.jsw --max
+30000 linhas -> t.jsw
+$ wjsw info t.jsw | grep filtro
+filtro    num          7048 bytes em 1 blocos
+$ wjsw calcular t.jsw --onde "num = N1234"
+total: 7 linha(s)
+```
+
+On the full INPI trademark dataset (55.3 million rows), finding one case number among 25 million rows took 25 ms,
+against 142 ms for DuckDB 2.0.1 reading Parquet on the same 16 cores (with full custody on the jsonW side). Queries that
+match millions of rows have no block to skip and stay between 0.8x and 1.5x DuckDB's time. Details in the paper
+(jsonw.org/paper, Section 5.8).
+
+**vqx: a lossy vector, declared in the schema (format v10).** `vf32[n]+vqx` standardizes each dimension by the file's
+mean and deviation, quantizes with a fixed step and entropy-codes the codes. The column reads back as a reconstructed
+`vf32` (maximum error of half a step in the standardized space) and cosine search on it runs in the standardized
+space. On 10,000 real embeddings of a 1.5-billion-parameter language model it used 3.3 bits per dimension and found the
+right vector in the top 10 twice as often as `vq8`, at 2.4 times less space. The loss is never hidden: keep `vf32` or
+`vf16` when you need the exact vector.
+
+```
+$ wjsw de-texto "id:i64,v:vf32[64]+vqx" v.jsw.txt v.jsw
+2000 linhas -> v.jsw
+$ wc -c v.jsw v8.jsw          # v8.jsw: the same 2,000 vectors as vq8[64]
+   47876 v.jsw
+  136644 v8.jsw
+  184520 total
+```
+
+**Context-mixing compression (`--max3`).** `wjsw regravar a.jsw b.jsw --max3` adds a context-mixing compressor that
+stays only on the columns where it wins. On the INPI dataset the result was 10.7% smaller than Parquet (zstd). It is
+slow to write: meant for files written once and read many times.
+
+**Encryption at rest through the C ABI.** `jsonw_cifrar(w, ...)`, called before the first row, writes the file
+encrypted: one random data key per file, wrapped with XChaCha20-Poly1305 by the tenant key. The tenant key never passes
+through the ABI or into the file: it comes from the file named by `WJSW_CHAVE_ARQ` or from the systemd credential
+`wjsw-chave` (32 raw bytes or 64 hex). `jsonw_abrir` and the `wjsw` tool read with the same key and refuse to open
+without it or with another tenant's key.
+
+**Rows by typed values, without JSON.** `jsonw_gravar_valores`, `jsonw_linha_valores`, `jsonw_campo_valor` and
+`jsonw_campo_tipo` write and read scalar fields (bool, integers, time, reals, text, dictionary, bytes, uuid) as
+`JsonwValor`, with no JSON on the way. Composite fields still go through `jsonw_gravar_json` and `jsonw_campo_json`.
+
+## What's new in 1.4.2
+
+### A measure column no longer loses value
+Before 1.4.2, `medida[kg]` rounded to the whole unit: 1 lb was stored as 0 kg. Now the column keeps the exact value.
+Measured with the 1.4.2 binary for macOS arm64:
+```bash
+$ wjsw de-texto 'id:i64,peso:medida[kg],preco:dinheiro' m.jsw.txt m.jsw
+$ wjsw ver m.jsw
+{id:1,peso:0.45359237 kg,preco:12.50 BRL}
+{id:2,peso:0.90718474 kg,preco:0.25 BRL}
+```
+- Declare a scale when you want a fixed number of decimals: `medida[kg,3]` rounds there (1 lb becomes 0.454 kg).
+- A unit with no exact scale is refused with a hint: `a unidade m/s pede escala: medida[m/s,3]`.
+
+### `calcular --valor` sums money
+The sum is done in whole cents, with no floating point, and comes out with the currency:
+```bash
+$ wjsw calcular m.jsw --valor preco
+total: 2 linha(s) · soma 12.75 BRL · min 0.25 · max 12.5 · media 6.375
+```
+Mixed currencies in the same column are refused (`moedas misturadas na coluna preco (BRL e USD)`).
+
+**Compatibility:** files written with `medida[kg]` keep opening. Files written by 1.4.1 with the old rounding are not fixed by
+themselves: rewrite them from the source. A schema with a declared scale (`medida[kg,3]`) does not open in 1.4.1 readers.
+
+## What's new in 1.4.1
+
+### Security fix: the permission view now applies to every command that reads values
+In 1.4.0 only `ver` and the web server applied the permission view. The other CLI commands read every column, so a `+pessoal` column (for example a personal ID number) could leak:
+
+- `filtrar` matched a condition on the hidden column, which revealed that the value existed;
+- `para-texto` and `calcular` printed the hidden values;
+- `filtrar` with an output file wrote them to disk.
+
+In 1.4.1 the same view applies to `ver`, `para-texto`, `filtrar`, `calcular`, `escolher`, `avaliar`, `comparar` and `info`. Without `WJSW_ESCOPOS`, `+pessoal` and `+escopo(x)` columns come out null. A condition, group or score on a hidden column fails with `coluna sem permissao: <column> (exige escopo)`. An output file stores the hidden column as null. With a tenant view, the `filtrar` header shows only the rows that session can see, not the total of other tenants.
+
+Measured with the same test file on macOS arm64: 1.4.0 failed 23 of 37 checks; 1.4.1 fails 0 of 37. The full suite also passes with AddressSanitizer and UBSan on Linux.
+
+`regravar`, `cifrar`, `decifrar`, `de-texto`, `de-json`, `conferir`, `reparar` and `medir` stay outside the view: they are file-owner operations and copy the whole file. Do not hand the raw `.jsw` file to someone who should see only part of it. Give them the output of `ver` or of the web server.
+
+**Upgrade if you rely on `+pessoal` or `+escopo(x)` columns.** The file format did not change: 1.4.1 reads every file written by 1.4.0, 1.3.x and 1.2.1.
+
+## What's new in 1.4.0
+
+### How do I encrypt a jsonW file at rest?
+From 1.4.0 a `.jsw` file can stay encrypted on disk (XChaCha20-Poly1305). The tenant key stays outside the file: a file with 64 hex characters, pointed to by `WJSW_CHAVE_ARQ` or the `--chave` option. Measured with 1.4.0:
+
+```text
+$ wjsw cifrar cifrado.jsw --chave chave.hex
+$ wjsw conferir cifrado.jsw
+FALHOU: arquivo cifrado: falta a chave do tenant (WJSW_CHAVE_ARQ ou credencial wjsw-chave)
+$ wjsw para-texto cifrado.jsw --chave chave.hex
+{id:1,cpf:"12345678909",cnpj:"11222333000181"}
+{id:2,cpf:"12345678909",cnpj:"11222333000181"}
+```
+
+Older readers (1.3.14 and 1.2.1) refuse the encrypted file with `versao do jsonW desconhecida` instead of reading the ciphertext as data. In the compatibility test, a file written by 1.4.0 without encryption came out byte for byte equal to the one written by 1.3.14 with the same data.
+
+### Documents from many countries: CPF, CNPJ, IBAN and more, with masks
+In the `mascara(tipo)` column jsonW accepts the document with or without punctuation, stores the canonical form and refuses invalid values. Measured example:
+
+```text
+$ wjsw de-texto 'id:i64,cpf:mascara(cpf),cnpj:mascara(cnpj)' clientes.jsw.txt docs.jsw
+2 linhas -> docs.jsw
+$ wjsw para-texto docs.jsw
+{id:1,cpf:"12345678909",cnpj:"11222333000181"}
+{id:2,cpf:"12345678909",cnpj:"11222333000181"}
+```
+
+An invalid value for the type is refused with an error (`valor 1 nao coube no esquema`, exit code 1). The list of types is in `mascara/wmascara.h`: among them CPF, CNPJ, CEP, phone, PIS, RENAVAM, IBAN, Portuguese NIF, French SIREN and SIRET, US EIN and SSN, Mexican CURP and RFC, Chilean RUT and Italian partita IVA.
+
+### jsonW profiles for A2A, UCP, ACP, AP2, Verifiable Intent, x402, MPP, AG-UI and OpenTelemetry
+The `perfis/` folder has one `.jsw.txt` file per commerce and agent protocol, with the jsonW schema of each object. Each object has a recorded sample that is checked. To prove everything again:
+
+```text
+$ bash perfis/provar-perfis.sh bin/linux-x86_64/wjsw   (or bin/macos-arm64/wjsw)
+perfis: 49 ok, 0 falhas
+```
+
+| Protocol | Profile | Objects with a sample |
+|---|---|---|
+| A2A (agent-to-agent communication) | `a2a.jsw.txt` | AgentCard, Artifact, Message, Part, Task |
+| UCP (commerce) | `ucp.jsw.txt` | Cart, Checkout, Order, Profile |
+| ACP (agent checkout) | `acp.jsw.txt` | CheckoutSession |
+| AP2 (payment mandates) | `ap2.jsw.txt` | CheckoutMandate, PaymentMandate |
+| Verifiable Intent | `vi.jsw.txt` | CheckoutMandate, L1Payload, L2Payload, PaymentMandate |
+| x402 (payment over HTTP 402) | `x402.jsw.txt` | PaymentPayload, PaymentRequired, PaymentRequirements, SettlementResponse |
+| MPP | `mpp.jsw.txt` | Challenge, Credential, Receipt |
+| AG-UI (agent user interface) | `agui.jsw.txt` | 13 events, from RunStarted to Custom |
+| OpenTelemetry | `otel.jsw.txt` | Span, TracesData |
+
+The folder also has `l402.jsw.txt` and `pix.jsw.txt`, which the proof counts in the 49 objects.
+
+## License and transparency
+
+**[jsonW Sustainable Use License 2.0](LICENSE.md)** ([Portuguese original](LICENCA.md), which prevails): proprietary
+software by WORTIC LTDA, free to use inside your own products, on as many servers as you like. Your files are yours. Without
+a commercial license you may not offer jsonW (or a competing format service) to third parties, reimplement the internal
+format, reverse-engineer the core, or use jsonW to train AI models that reproduce it. Products that ship jsonW must carry the
+notice "Uses jsonW, by Wortic (jsonw.org), under the jsonW Sustainable Use License." On first run per machine, `wjsw` sends only its
+version and platform and writes `~/.jsonw/instalou`; no names, paths, data or IPs are kept. Opt out with `JSONW_SEM_PING=1`.
+**The library and SDKs never touch the network.**
+
+---
+
+<p align="center">
+  <a href="https://wortic.com.br"><img alt="Wortic" src="https://wortic.com.br/site-novo/v5/assets/wortic-logo.png" height="28"></a><br/>
+  <sub>jsonW is created and maintained by <a href="https://wortic.com.br">Wortic</a>.</sub>
+</p>

@@ -1,0 +1,6 @@
+// otel.jsw.txt: o perfil jsonW do OpenTelemetry (OTLP em JSON), tirado do exemplo oficial examples/trace.json do repositório
+// open-telemetry/opentelemetry-proto (lido em 14/11/2026). Os tempos em nanossegundos chegam como texto no OTLP/JSON (passam do
+// inteiro seguro de 53 bits) e ficam como código. Status, eventos e links são opcionais no span (proto trace.proto).
+// Esquema: protocolo:dic,versao:dic,objeto:dic,esquema:texto,fonte:url
+{protocolo:"otel",versao:"otlp-1",objeto:"Span",esquema:"traceId:codigo,spanId:codigo,parentSpanId:codigo?,name:texto,startTimeUnixNano:codigo,endTimeUnixNano:codigo,kind:i64,attributes:lista<obj{key:dic,value:qualquer}>,status:qualquer?,events:lista<qualquer>?,links:lista<qualquer>?",fonte:"https://github.com/open-telemetry/opentelemetry-proto/blob/main/examples/trace.json"}
+{protocolo:"otel",versao:"otlp-1",objeto:"TracesData",esquema:"resourceSpans:lista<obj{resource:qualquer,scopeSpans:lista<obj{scope:qualquer,spans:lista<qualquer>}>}>",fonte:"https://github.com/open-telemetry/opentelemetry-proto/blob/main/examples/trace.json"}

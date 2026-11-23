@@ -1,0 +1,82 @@
+{
+  "name": "@wortictecnologia/jsonw",
+  "version": "2.0.0",
+  "description": "jsonW: the data format for the AI era. JSON-compatible text, a Parquet-like columnar file and a vector index in one: money, decimals, units, embeddings, top-k semantic search, multi-tenant permissions and custody inside the file. TypeScript types, zero-dependency C core.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./wasm": {
+      "types": "./wasm/jsonw.d.ts",
+      "node": "./wasm/jsonw-node.js",
+      "default": "./wasm/jsonw.js"
+    },
+    "./wasm/jsonw.wasm": "./wasm/jsonw.wasm",
+    "./package.json": "./package.json"
+  },
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "bin": {
+    "jsonw": "bin/jsonw.js",
+    "wjsw": "bin/jsonw.js"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "bin/",
+    "prebuilt/",
+    "wasm/",
+    "LICENCA.md",
+    "LICENSE.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "keywords": [
+    "jsonw",
+    "json",
+    "json-alternative",
+    "jsonl",
+    "parquet",
+    "parquet-alternative",
+    "columnar",
+    "data-format",
+    "serialization",
+    "typescript",
+    "nextjs",
+    "react",
+    "rag",
+    "llm",
+    "ai",
+    "embeddings",
+    "vector-search",
+    "vector-database",
+    "semantic-search",
+    "top-k",
+    "decimal",
+    "money",
+    "currency",
+    "units",
+    "multi-tenant",
+    "permissions",
+    "row-level-security",
+    "data-privacy",
+    "custody",
+    "s3",
+    "cloudflare-r2",
+    "n-api"
+  ],
+  "homepage": "https://jsonw.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/developer-wortic/jsonw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/developer-wortic/jsonw/issues"
+  },
+  "author": "Wortic <https://wortic.com.br>",
+  "license": "SEE LICENSE IN LICENCA.md"
+}
